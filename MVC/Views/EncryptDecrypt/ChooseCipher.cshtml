@@ -1,0 +1,19 @@
+@{
+    ViewData["Title"] = "Choose Cipher";
+}
+
+<h2>Choose Cipher</h2>
+
+<form asp-action="ChooseCipher" method="post">
+    <input type="hidden" name="fileId" value="@ViewBag.FileId" />
+
+    <div class="form-group">
+        <label>Select Cipher</label>
+        <select name="cipher" class="form-control">
+            <option value="Caesar">Caesar Cipher</option>
+            <!-- Add more ciphers here later -->
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Next</button>
+</form>

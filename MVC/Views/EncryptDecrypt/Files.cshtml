@@ -1,0 +1,49 @@
+@model List<Core.Entities.DbFile>
+
+@{
+    ViewData["Title"] = "Files";
+}
+
+<h2>Your Files</h2>
+
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-info">@TempData["Message"]</div>
+}
+
+@if (Model == null || !Model.Any())
+{
+    <div class="alert alert-warning">No files found.</div>
+}
+else
+{
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>File Name</th>
+                <th>File Extension</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var file in Model)
+            {
+                <tr>
+                    <td>@file.FileName</td>
+                    <td>@file.FileExtension</td>
+                    <td class="display-flex">
+                        <a asp-action="ChooseCipher" asp-route-fileId="@file.Id" class="btn btn-primary">Encrypt/Decrypt</a>
+                        <a asp-action="DownloadFile" asp-route-fileId="@file.Id" class="btn btn-success">Download</a>
+                        <a asp-action="PrintFile" asp-route-fileId="@file.Id" class="btn btn-info">Print</a>
+                        <form asp-action="DeleteFile" method="post" style="display:inline;">
+                            <input type="hidden" name="fileId" value="@file.Id" />
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this file?');">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<a asp-action="Index" class="btn btn-secondary">Back to Upload</a>
