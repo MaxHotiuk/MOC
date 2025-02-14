@@ -1,8 +1,41 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Home";
 }
 
 <div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <h1 class="display-4">Welcome to File Encryptor/Decryptor</h1>
+    <p class="lead">A secure application for encrypting and decrypting your files.</p>
+
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <div class="alert alert-success mt-4">
+            <h4>Hello!</h4>
+            <p>You are now logged in. Start by uploading a file to encrypt or decrypt.</p>
+            <a asp-controller="EncryptDecrypt" asp-action="Index" class="btn btn-primary btn-lg">Upload File</a>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info mt-4">
+            <h4>Get Started</h4>
+            <p>To use this application, please log in or register if you don't have an account yet.</p>
+            <div class="mt-3">
+                <a asp-controller="Account" asp-action="Login" class="btn btn-primary btn-lg">Log In</a>
+                <a asp-controller="Account" asp-action="Register" class="btn btn-secondary btn-lg">Register</a>
+            </div>
+        </div>
+    }
+
+    <div class="mt-5">
+        <h2>How It Works</h2>
+        <p>This application allows you to:</p>
+        <ul class="list-unstyled">
+            <li>📁 <strong>Upload files</strong> for encryption or decryption.</li>
+            <li>🔒 <strong>Encrypt files</strong> using secure algorithms (e.g., Caesar Cipher).</li>
+            <li>🔓 <strong>Decrypt files</strong> that were previously encrypted.</li>
+            <li>📥 <strong>Download</strong> your processed files securely.</li>
+            <li>🖨️ <strong>Print</strong> your files directly from the browser.</li>
+        </ul>
+        <p>Start by uploading a file or logging in to access your files.</p>
+    </div>
 </div>
