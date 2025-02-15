@@ -8,5 +8,6 @@ namespace Core.Interfaces
         Task<List<DbFile>> GetUserFilesAsync(string userId);
         Task DeleteFileAsync(int fileId);
         Task<DbFile> GetFileByIdAsync(int fileId, string userId);
+        Task UpdateFileAsync(DbFile file);
     }
 }

@@ -34,7 +34,8 @@ else
                     <td class="display-flex">
                         <a asp-action="ChooseCipher" asp-route-fileId="@file.Id" class="btn btn-primary">Encrypt/Decrypt</a>
                         <a asp-action="DownloadFile" asp-route-fileId="@file.Id" class="btn btn-success">Download</a>
-                        <a asp-action="PrintFile" asp-route-fileId="@file.Id" class="btn btn-info">Print</a>
+                        <button class="btn btn-info" onclick="printFile(@file.Id)">Print</button>
+                        <a asp-action="FrequencyTable" asp-route-fileId="@file.Id" class="btn btn-warning">Frequency Table</a>
                         <form asp-action="DeleteFile" method="post" style="display:inline;">
                             <input type="hidden" name="fileId" value="@file.Id" />
                             <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this file?');">Delete</button>
@@ -44,6 +45,39 @@ else
             }
         </tbody>
     </table>
+    <div>
+        <a asp-action="FrequencyTableDic" asp-route-language="English" class="btn btn-warning">English Frequency Table</a>
+        <a asp-action="FrequencyTableDic" asp-route-language="Ukrainian" class="btn btn-warning">Ukrainian Frequency Table</a>
+    </div>
 }
+<div style="padding-top: 10px;">
+    <a asp-action="Index" class="btn btn-secondary">Back to Upload</a>
+</div>
 
-<a asp-action="Index" class="btn btn-secondary">Back to Upload</a>
+<script>
+    function printFile(fileId) {
+        fetch(`/EncryptDecrypt/ReturnFileContent?fileId=${fileId}`)
+            .then(response => response.text())
+            .then(content => {
+                let printWindow = window.open('', '_blank');
+                printWindow.document.write(`
+                    <html>
+                    <head>
+                        <title>Print File</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; padding: 20px; }
+                            pre { white-space: pre-wrap; word-wrap: break-word; }
+                        </style>
+                    </head>
+                    <body>
+                        <pre>${content}</pre>
+                    </body>
+                    </html>
+                `);
+                printWindow.document.close();
+                printWindow.focus();
+                printWindow.print();
+            })
+            .catch(error => console.error('Error fetching file content:', error));
+    }
+</script>

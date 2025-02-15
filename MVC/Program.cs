@@ -33,6 +33,8 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<ICaesarCipherService, CaesarCipherService>();
+builder.Services.AddScoped<IFrequencyService, FrequencyService>();
 
 builder.Services.AddControllersWithViews();
 
