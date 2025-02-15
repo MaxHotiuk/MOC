@@ -40,5 +40,11 @@ namespace Infrastructure.Services
             return await _context.Files
                 .FirstOrDefaultAsync(f => f.Id == fileId && f.UserId == userId) ?? throw new KeyNotFoundException();
         }
+
+        public async Task UpdateFileAsync(DbFile file)
+        {
+            _context.Files.Update(file);
+            await _context.SaveChangesAsync();
+        }
     }
 }

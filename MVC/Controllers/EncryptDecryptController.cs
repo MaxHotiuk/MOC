@@ -1,9 +1,13 @@
 using Core.Entities;
 using Core.Interfaces;
 using Core.Models;
+using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using MVC.Models;
+using Newtonsoft.Json;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Security.Claims;
 using System.Text;
@@ -15,10 +19,18 @@ namespace MVC.Controllers
     public class EncryptDecryptController : Controller
     {
         private readonly IFileService _fileService;
+        private readonly IFrequencyService _frequencyService;
+        private readonly IConfiguration _configuration;
+        private static readonly ConcurrentDictionary<string, TempFileInfoModel> _tempFiles = new();
+        private readonly string _tempFilePath;
 
-        public EncryptDecryptController(IFileService fileService)
+        public EncryptDecryptController(IFileService fileService, IConfiguration configuration, IFrequencyService frequencyService)
         {
             _fileService = fileService;
+            _frequencyService = frequencyService;
+            _configuration = configuration;
+            _tempFilePath = Path.Combine(Directory.GetCurrentDirectory(), "TempFiles");
+            Directory.CreateDirectory(_tempFilePath);
         }
 
         public IActionResult Index()
@@ -35,7 +47,7 @@ namespace MVC.Controllers
                 {
                     UserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty,
                     FileName = model.FileName ?? Path.GetFileNameWithoutExtension(model.File!.FileName),
-                    FileExtension = model.FileExtension ?? Path.GetExtension(model.File!.FileName),
+                    FileExtension = model.File != null ? Path.GetExtension(model.File.FileName) : model.FileExtension ?? ".txt",
                     IsByte = model.IsByte
                 };
 
@@ -46,6 +58,7 @@ namespace MVC.Controllers
                     if (model.IsByte)
                     {
                         dbFile.FileContentByte = memoryStream.ToArray();
+                        dbFile.FileContentText = "File content is in byte format.";
                     }
                     else
                     {
@@ -58,6 +71,8 @@ namespace MVC.Controllers
                 }
 
                 var fileId = await _fileService.UploadOrCreateFileAsync(dbFile);
+                var filePath = Url.Action("DownloadFile", "EncryptDecrypt", new { fileId = fileId }, Request.Scheme);
+                ViewBag.FileLink = filePath;
                 return RedirectToAction("Files");
             }
 
@@ -110,25 +125,22 @@ namespace MVC.Controllers
             }
 
             var file = await _fileService.GetFileByIdAsync(fileId, userId);
-            if (file == null || file.UserId != userId) // Ensure the file belongs to the current user
+            if (file == null || file.UserId != userId)
             {
                 return NotFound();
             }
 
             byte[] fileBytes;
-            string contentType;
             string fileName;
 
             if (file.IsByte && file.FileContentByte != null)
             {
                 fileBytes = file.FileContentByte;
-                contentType = "application/octet-stream";
                 fileName = $"{file.FileName}{file.FileExtension}";
             }
             else if (!string.IsNullOrEmpty(file.FileContentText))
             {
                 fileBytes = Encoding.UTF8.GetBytes(file.FileContentText);
-                contentType = "text/plain";
                 fileName = $"{file.FileName}{file.FileExtension}";
             }
             else
@@ -136,10 +148,20 @@ namespace MVC.Controllers
                 return NotFound();
             }
 
-            return File(fileBytes, contentType, fileName);
+            var mimeType = "application/octet-stream";
+            if (file.FileExtension == ".pdf")
+                mimeType = "application/pdf";
+            else if (file.FileExtension == ".jpg" || file.FileExtension == ".jpeg")
+                mimeType = "image/jpeg";
+            else if (file.FileExtension == ".png")
+                mimeType = "image/png";
+            else if (file.FileExtension == ".txt")
+                mimeType = "text/plain";
+
+            return File(fileBytes, mimeType, fileName);
         }
 
-        public async Task<IActionResult> PrintFile(int fileId)
+        public async Task<IActionResult> ReturnFileContent(int fileId)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
@@ -148,27 +170,73 @@ namespace MVC.Controllers
             }
 
             var file = await _fileService.GetFileByIdAsync(fileId, userId);
-            if (file == null || file.UserId != userId) // Ensure the file belongs to the current user
+            if (file == null || file.UserId != userId)
             {
                 return NotFound();
             }
 
-            if (file.IsByte && file.FileContentByte != null)
+            return Content(file.FileContentText!);
+        }
+
+        [HttpPost]
+        public IActionResult ChooseCipher(int fileId, string cipher)
+        {
+            switch (cipher)
             {
-                // For binary files, display a message that printing is not supported
-                TempData["Message"] = "Printing binary files is not supported.";
-                return RedirectToAction("Files");
+                case "Caesar":
+                    return RedirectToAction("Index", "CaesarCipher", new { fileId });
+                default:
+                    return RedirectToAction("Files");
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> FrequencyTable(int fileId)
+        {
+            var file = await _fileService.GetFileByIdAsync(fileId, User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new Exception("User not found"));
+            if (file == null)
+            {
+                return NotFound();
             }
 
-            if (!string.IsNullOrEmpty(file.FileContentText))
+            var content = file.FileContentText ?? throw new Exception("No content in file");
+
+            var frequencyTable = _frequencyService.GetFrequency(content);
+
+            ViewBag.FileId = fileId;
+            ViewBag.FrequencyTable = frequencyTable;
+            return View();
+        }
+
+        [HttpGet]
+        public IActionResult FrequencyTableDic(string language)
+        {
+            if (string.IsNullOrEmpty(language))
             {
-                // For text files, render a printable view
-                ViewBag.FileName = $"{file.FileName}{file.FileExtension}";
-                ViewBag.FileContent = file.FileContentText;
-                return View("Print");
+                return BadRequest("Language not specified.");
+            }
+            else if (language != "English" && language != "Ukrainian")
+            {
+                return BadRequest("Language not supported.");
             }
 
-            return NotFound();
+            var jsonPath = "/Users/maxhotiuk/Desktop/6sem/MOC/MVC/wwwroot/data/frequency_data.json";
+
+            if (!System.IO.File.Exists(jsonPath))
+            {
+                return StatusCode(500, "Frequency data file not found.");
+            }
+
+            var jsonData = System.IO.File.ReadAllText(jsonPath);
+            var frequencyData = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, double>>>(jsonData);
+
+            if (frequencyData == null || !frequencyData.ContainsKey(language))
+            {
+                return StatusCode(500, "Frequency data not available.");
+            }
+
+            ViewBag.FrequencyTable = frequencyData[language];
+            return View();
         }
     }
 }
