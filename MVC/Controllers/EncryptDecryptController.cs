@@ -157,6 +157,8 @@ namespace MVC.Controllers
                 mimeType = "image/png";
             else if (file.FileExtension == ".txt")
                 mimeType = "text/plain";
+            else if (file.FileExtension == ".exe")
+                mimeType = "application/octet-stream";
 
             return File(fileBytes, mimeType, fileName);
         }
