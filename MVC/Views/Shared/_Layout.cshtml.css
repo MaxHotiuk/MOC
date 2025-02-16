@@ -7,14 +7,15 @@
 }
 
 body {
-  background-color: var(--background-color);
+  background-image: url("https://raw.githubusercontent.com/MaxHotiuk/MOC/feature-ui-improvement/MVC/wwwroot/assets/background.jpg");
+  /* background-color: var(--background-color); */
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
 .navbar {
-  background-color: white;
+  background-color: rgba(255, 255, 255, 0.8);
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   padding: 1rem 0;
 }
@@ -45,6 +46,7 @@ main {
 .card {
   border: none;
   box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  background-color: rgba(255, 255, 255, 0.8);
   transition: transform 0.3s ease;
 }
 
@@ -53,6 +55,7 @@ main {
 }
 
 .card-header {
+  background-color: rgba(255, 255, 255, 0.8);
   border-bottom: none;
   padding: 1.5rem;
 }
