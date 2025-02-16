@@ -26,12 +26,12 @@ namespace MVC.Controllers
             {
                 var result = await _accountService.RegisterUserAsync(model.Email, model.Password);
 
-                if (result)
+                if (result == "Success")
                 {
                     return RedirectToAction("Index", "Home");
                 }
 
-                ModelState.AddModelError(string.Empty, "Registration failed. Please try again.");
+                ModelState.AddModelError(string.Empty, result);
             }
 
             return View(model);
@@ -50,12 +50,12 @@ namespace MVC.Controllers
             {
                 var result = await _accountService.LoginUserAsync(model.Email, model.Password, model.RememberMe);
 
-                if (result)
+                if (result == "Success")
                 {
                     return RedirectToAction("Index", "Home");
                 }
 
-                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                ModelState.AddModelError(string.Empty, result);
             }
 
             return View(model);

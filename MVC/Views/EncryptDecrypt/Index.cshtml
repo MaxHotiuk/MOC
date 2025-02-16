@@ -1,40 +1,145 @@
 @model Core.Models.FileUploadModel
 
 @{
-    ViewData["Title"] = "Encrypt/Decrypt";
+    ViewData["Title"] = "Upload File";
 }
 
-<h2>Encrypt/Decrypt</h2>
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h2 class="h4 mb-0">Process New File</h2>
+                </div>
+                <div class="card-body">
+                    <form asp-action="UploadOrCreate" method="post" enctype="multipart/form-data">
+                        @if (ViewContext.ModelState.ErrorCount > 0)
+                        {
+                            <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+                        }
 
-<form asp-action="UploadOrCreate" method="post" enctype="multipart/form-data">
-    <div class="form-group">
-        <label asp-for="File">Upload File</label>
-        <input asp-for="File" type="file" class="form-control" />
-        <span asp-validation-for="File" class="text-danger"></span>
+                        <div class="row g-4">
+                            <div class="col-12">
+                                <div class="upload-area p-4 border rounded bg-light" id="drop-area">
+                                    <div class="text-center">
+                                        <i class="bi bi-cloud-upload display-4 text-primary mb-3 text-center"></i>
+                                    </div>
+                                    <div class="mb-3 text-center">
+                                        <label asp-for="File" class="form-label">Drag & Drop your file here or click "Choose file"</label>
+                                        <input asp-for="File" type="file" class="form-control" id="fileInput" />
+                                        <span asp-validation-for="File" class="text-danger small"></span>
+                                    </div>
+                                    <div class="form-check mb-0">
+                                        <input asp-for="IsByte" class="form-check-input" />
+                                        <label asp-for="IsByte" class="form-check-label">File is in byte format</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="text-center">
+                                    <span class="text-muted">OR</span>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label asp-for="FileContentText" class="form-label">Create New Text File</label>
+                                    <textarea asp-for="FileContentText" class="form-control" 
+                                              rows="5" placeholder="Enter your text here..."></textarea>
+                                    <span asp-validation-for="FileContentText" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label asp-for="FileName" class="form-label">File Name</label>
+                                    <input asp-for="FileName" class="form-control" placeholder="Enter file name" />
+                                    <span asp-validation-for="FileName" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label asp-for="FileExtension" class="form-label">Extension</label>
+                                    <input asp-for="FileExtension" class="form-control bg-light" value=".txt" readonly />
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a asp-action="Files" class="btn btn-outline-secondary">
+                                        <i class="bi bi-arrow-left me-2"></i>Back to Files
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-arrow-right me-2"></i>Continue
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
+</div>
 
-    <div class="form-group form-check">
-        <input asp-for="IsByte" class="form-check-input" />
-        <label asp-for="IsByte" class="form-check-label">Is the file in byte format?</label>
-    </div>
+@section Styles {
+    <style>
+        .upload-area {
+            transition: all 0.3s ease;
+        }
+        
+        .upload-area:hover {
+            background-color: #f8f9fa;
+            border-color: #0d6efd;
+        }
+        
+        .upload-area.drag-over {
+            background-color: #e9ecef;
+            border-color: #0d6efd;
+        }
+        
+        .progress {
+            background-color: #e9ecef;
+            border-radius: 0.25rem;
+        }
+        
+        code {
+            background-color: #f8f9fa;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+        }
+    </style>
+}
 
-    <div class="form-group" style="padding-top: 20px;">
-        <label asp-for="FileContentText"><strong>Or</strong> Create a New Text File</label>
-        <textarea asp-for="FileContentText" class="form-control" rows="5"></textarea>
-        <span asp-validation-for="FileContentText" class="text-danger"></span>
-    </div>
+@section Scripts {
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const dropArea = document.getElementById('drop-area');
+        const fileNameDisplay = document.getElementById('file-name');
 
-    <div class="form-group">
-        <label asp-for="FileName">File Name</label>
-        <input asp-for="FileName" class="form-control" />
-        <span asp-validation-for="FileName" class="text-danger"></span>
-    </div>
+        fileInput.addEventListener('change', function() {
+            const fileName = this.files[0]?.name || 'No file chosen';
+            fileNameDisplay.textContent = fileName;
+        });
 
-    <div class="form-group">
-        <label asp-for="FileExtension">File Extension</label>
-        <input asp-for="FileExtension" class="form-control" value=".txt" readonly />
-        <span asp-validation-for="FileExtension" class="text-danger"></span>
-    </div>
+        dropArea.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            dropArea.classList.add('drag-over');
+        });
 
-    <button type="submit" class="btn btn-primary">Next</button>
-</form>
+        dropArea.addEventListener('dragleave', () => {
+            dropArea.classList.remove('drag-over');
+        });
+
+        dropArea.addEventListener('drop', (event) => {
+            event.preventDefault();
+            dropArea.classList.remove('drag-over');
+            if (event.dataTransfer.files.length > 0) {
+                fileInput.files = event.dataTransfer.files;
+                fileNameDisplay.textContent = event.dataTransfer.files[0].name;
+            }
+        });
+    </script>
+}
