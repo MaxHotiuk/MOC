@@ -1,34 +1,88 @@
 @{
-    ViewData["Title"] = "Frequency Table";
+    ViewData["Title"] = "Frequency Analysis";
 }
 
-<h2>Frequency Table</h2>
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h2 class="h4 mb-0">Character Frequency Analysis</h2>
+                    <a asp-controller="EncryptDecrypt" asp-action="Files" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-2"></i>Back to Files
+                    </a>
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.FrequencyTable != null)
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Character</th>
+                                        <th>Occurrences</th>
+                                        <th>Frequency</th>
+                                        <th>Visual Distribution</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in ViewBag.FrequencyTable)
+                                    {
+                                        <tr>
+                                            <td><code>@item.Key</code></td>
+                                            <td>@item.Value["Count"]</td>
+                                            <td>@item.Value["Percentage"]%</td>
+                                            <td>
+                                                <div class="progress" style="height: 20px;">
+                                                    <div class="progress-bar bg-primary" 
+                                                         role="progressbar" 
+                                                         style="width: @(Math.Round(Convert.ToDouble(item.Value["Percentage"])))%"
+                                                         aria-valuenow="@(Math.Round(Convert.ToDouble(item.Value["Percentage"])))"
+                                                         aria-valuemin="0" 
+                                                         aria-valuemax="100">
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="bi bi-bar-chart-line display-4 text-muted mb-3"></i>
+                            <h3 class="h5">No Frequency Data Available</h3>
+                            <p class="text-muted">The file might be empty or contain no analyzable characters.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-@if (ViewBag.FrequencyTable != null)
-{
-    <table class="table table-bordered table-striped">
-        <thead>
-            <tr>
-                <th>Character</th>
-                <th>Count</th>
-                <th>Percentage</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in ViewBag.FrequencyTable)
-            {
-                <tr>
-                    <td>@item.Key</td>
-                    <td>@item.Value["Count"]</td>
-                    <td>@item.Value["Percentage"]%</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+@section Styles {
+    <style>
+        .upload-area {
+            transition: all 0.3s ease;
+        }
+        
+        .upload-area:hover {
+            background-color: #f8f9fa;
+            border-color: #0d6efd;
+        }
+        
+        .progress {
+            background-color: #e9ecef;
+            border-radius: 0.25rem;
+        }
+        
+        code {
+            background-color: #f8f9fa;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+        }
+    </style>
 }
-else
-{
-    <div class="alert alert-warning">No frequency data available.</div>
-}
-
-<a asp-controller="EncryptDecrypt" asp-action="Files" class="btn btn-secondary">Back to Files</a>

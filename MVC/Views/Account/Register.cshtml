@@ -4,39 +4,84 @@
     ViewData["Title"] = "Register";
 }
 
-<div class="container mt-5">
+<div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-md-6">
+        <div class="col-12 col-md-8 col-lg-6">
             <div class="card">
                 <div class="card-header bg-success text-white">
-                    <h2 class="text-center">Register</h2>
+                    <h2 class="text-center h4 mb-0">Create Account</h2>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-4">
                     <form asp-action="Register" method="post">
-                        <div asp-validation-summary="All" class="text-danger"></div>
+                        @if (ViewContext.ModelState.ErrorCount > 0)
+                        {
+                            <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+                        }
 
-                        <div class="form-group">
-                            <label asp-for="Email"></label>
-                            <input asp-for="Email" class="form-control" placeholder="Enter your email" />
-                            <span asp-validation-for="Email" class="text-danger"></span>
+                        <div class="mb-4">
+                            <label asp-for="Email" class="form-label">Email Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                <input asp-for="Email" class="form-control" placeholder="name@example.com" />
+                            </div>
+                            <span asp-validation-for="Email" class="text-danger small"></span>
                         </div>
 
-                        <div class="form-group">
-                            <label asp-for="Password"></label>
-                            <input asp-for="Password" class="form-control" placeholder="Enter your password" />
-                            <span asp-validation-for="Password" class="text-danger"></span>
+                        <div class="mb-4">
+                            <label asp-for="Password" class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                <input asp-for="Password" class="form-control" placeholder="Create a strong password" type="password" />
+                                <button class="btn btn-outline-secondary px-3" type="button" onclick="togglePassword('Password')" title="Toggle password visibility">
+                                    <i class="bi bi-eye-slash" id="Password-icon"></i>
+                                </button>
+                            </div>
+                            <span asp-validation-for="Password" class="text-danger small"></span>
                         </div>
 
-                        <div class="form-group">
-                            <label asp-for="ConfirmPassword"></label>
-                            <input asp-for="ConfirmPassword" class="form-control" placeholder="Confirm your password" />
-                            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                        <div class="mb-4">
+                            <label asp-for="ConfirmPassword" class="form-label">Confirm Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                                <input asp-for="ConfirmPassword" class="form-control" placeholder="Confirm your password" type="password" />
+                                <button class="btn btn-outline-secondary px-3" type="button" onclick="togglePassword('ConfirmPassword')" title="Toggle password visibility">
+                                    <i class="bi bi-eye-slash" id="ConfirmPassword-icon"></i>
+                                </button>
+                            </div>
+                            <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
                         </div>
 
-                        <button type="submit" class="btn btn-success btn-block">Register</button>
+                        <button type="submit" class="btn btn-success w-100 mb-3">
+                            <i class="bi bi-person-plus me-2"></i>Create Account
+                        </button>
+
+                        <div class="text-center">
+                            <p class="mb-0">Already have an account? 
+                                <a asp-action="Login" class="text-success">Login here</a>
+                            </p>
+                        </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        function togglePassword(fieldId) {
+            const passwordInput = document.querySelector(`#${fieldId}`);
+            const icon = document.querySelector(`#${fieldId}-icon`);
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            }
+        }
+    </script>
+}
