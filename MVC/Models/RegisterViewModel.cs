@@ -4,8 +4,8 @@ namespace MVC.Models;
 
 public class RegisterViewModel
 {
-    [Required]
-    [EmailAddress]
+    [Required(ErrorMessage = "Email is required.")]
+    [EmailAddress(ErrorMessage = "Invalid email address.")]
     public string Email { get; set; } = null!;
 
     [Required]

@@ -12,7 +12,7 @@
                     <h2 class="text-center h4 mb-0">Welcome Back</h2>
                 </div>
                 <div class="card-body p-4">
-                    <form asp-action="Login" method="post">
+                    <form asp-action="Login" method="post" id="loginForm">
                         @if (ViewContext.ModelState.ErrorCount > 0)
                         {
                             <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
@@ -22,7 +22,7 @@
                             <label asp-for="Email" class="form-label">Email Address</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                                <input asp-for="Email" class="form-control" placeholder="name@example.com" />
+                                <input asp-for="Email" class="form-control" placeholder="name@example.com" id="Email" />
                             </div>
                             <span asp-validation-for="Email" class="text-danger small"></span>
                         </div>
@@ -31,7 +31,7 @@
                             <label asp-for="Password" class="form-label">Password</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                                <input asp-for="Password" class="form-control" placeholder="Enter your password" type="password" />
+                                <input asp-for="Password" class="form-control" placeholder="Enter your password" type="password" id="Password" />
                                 <button class="btn btn-outline-secondary px-3" type="button" onclick="togglePassword('Password')" title="Toggle password visibility">
                                     <i class="bi bi-eye-slash" id="Password-icon"></i>
                                 </button>
@@ -46,7 +46,7 @@
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary w-100 mb-3">
+                        <button type="submit" class="btn btn-primary w-100 mb-3" id="loginButton" disabled>
                             <i class="bi bi-box-arrow-in-right me-2"></i>Login
                         </button>
 
@@ -78,5 +78,17 @@
                 icon.classList.add('bi-eye-slash');
             }
         }
+
+        // Enable/disable login button based on input
+        const emailInput = document.querySelector('#Email');
+        const passwordInput = document.querySelector('#Password');
+        const loginButton = document.querySelector('#loginButton');
+
+        function validateForm() {
+            loginButton.disabled = !(emailInput.value.trim() && passwordInput.value.trim());
+        }
+
+        emailInput.addEventListener('input', validateForm);
+        passwordInput.addEventListener('input', validateForm);
     </script>
 }

@@ -46,7 +46,7 @@
                                 <div class="form-group">
                                     <label asp-for="FileContentText" class="form-label">Create New Text File</label>
                                     <textarea asp-for="FileContentText" class="form-control" 
-                                              rows="5" placeholder="Enter your text here..."></textarea>
+                                              rows="5" placeholder="Enter your text here..." id="fileContentText"></textarea>
                                     <span asp-validation-for="FileContentText" class="text-danger small"></span>
                                 </div>
                             </div>
@@ -54,7 +54,7 @@
                             <div class="col-md-8">
                                 <div class="form-group">
                                     <label asp-for="FileName" class="form-label">File Name</label>
-                                    <input asp-for="FileName" class="form-control" placeholder="Enter file name" />
+                                    <input asp-for="FileName" class="form-control" placeholder="Enter file name" id="fileName" />
                                     <span asp-validation-for="FileName" class="text-danger small"></span>
                                 </div>
                             </div>
@@ -71,7 +71,7 @@
                                     <a asp-action="Files" class="btn btn-outline-secondary">
                                         <i class="bi bi-arrow-left me-2"></i>Back to Files
                                     </a>
-                                    <button type="submit" class="btn btn-primary">
+                                    <button type="submit" class="btn btn-primary" id="submitButton">
                                         <i class="bi bi-arrow-right me-2"></i>Continue
                                     </button>
                                 </div>
@@ -84,6 +84,48 @@
     </div>
 </div>
 
+@section Scripts {
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const fileContentText = document.getElementById('fileContentText');
+        const fileName = document.getElementById('fileName');
+        const dropArea = document.getElementById('drop-area');
+        const submitButton = document.getElementById('submitButton');
+
+        function validateForm() {
+            const fileChosen = fileInput.files.length > 0;
+            const textProvided = fileContentText.value.trim().length > 0 && fileName.value.trim().length > 0;
+            const textProvidedOne = fileContentText.value.trim().length > 0 || fileName.value.trim().length > 0;
+
+            submitButton.disabled = (!fileChosen && !textProvided) || (fileChosen && textProvidedOne);
+        }
+
+        fileInput.addEventListener('change', validateForm);
+        fileContentText.addEventListener('input', validateForm);
+        fileName.addEventListener('input', validateForm);
+
+        dropArea.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            dropArea.classList.add('drag-over');
+        });
+
+        dropArea.addEventListener('dragleave', () => {
+            dropArea.classList.remove('drag-over');
+        });
+
+        dropArea.addEventListener('drop', (event) => {
+            event.preventDefault();
+            dropArea.classList.remove('drag-over');
+            if (event.dataTransfer.files.length > 0) {
+                fileInput.files = event.dataTransfer.files;
+            }
+            validateForm();
+        });
+
+        // Initial validation check on page load
+        validateForm();
+    </script>
+}
 @section Styles {
     <style>
         .upload-area {
@@ -111,35 +153,4 @@
             border-radius: 0.25rem;
         }
     </style>
-}
-
-@section Scripts {
-    <script>
-        const fileInput = document.getElementById('fileInput');
-        const dropArea = document.getElementById('drop-area');
-        const fileNameDisplay = document.getElementById('file-name');
-
-        fileInput.addEventListener('change', function() {
-            const fileName = this.files[0]?.name || 'No file chosen';
-            fileNameDisplay.textContent = fileName;
-        });
-
-        dropArea.addEventListener('dragover', (event) => {
-            event.preventDefault();
-            dropArea.classList.add('drag-over');
-        });
-
-        dropArea.addEventListener('dragleave', () => {
-            dropArea.classList.remove('drag-over');
-        });
-
-        dropArea.addEventListener('drop', (event) => {
-            event.preventDefault();
-            dropArea.classList.remove('drag-over');
-            if (event.dataTransfer.files.length > 0) {
-                fileInput.files = event.dataTransfer.files;
-                fileNameDisplay.textContent = event.dataTransfer.files[0].name;
-            }
-        });
-    </script>
 }
