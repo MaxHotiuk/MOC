@@ -68,14 +68,15 @@ public class CaesarCipherControllerTests
         var key = 3;
         var originalContent = "Hello";
         var encryptedContent = "Khoor";
+        var language = "English";
         var file = new DbFile { Id = fileId, FileContentText = originalContent, IsByte = false };
 
         _mockFileService.Setup(service => service.GetFileByIdAsync(fileId, "test-user-id"))
                        .ReturnsAsync(file);
-        _mockCaesarCipherService.Setup(service => service.EncryptAsync(originalContent, key))
+        _mockCaesarCipherService.Setup(service => service.EncryptAsync(originalContent, key, language))
                                .ReturnsAsync(encryptedContent);
 
-        var result = await _controller.Encrypt(fileId, key);
+        var result = await _controller.Encrypt(fileId, key, language);
 
         var viewResult = Assert.IsType<ViewResult>(result);
         Assert.Equal("Index", viewResult.ViewName);
@@ -92,14 +93,15 @@ public class CaesarCipherControllerTests
         var key = 3;
         var encryptedContent = "Khoor";
         var decryptedContent = "Hello";
+        var language = "English";
         var file = new DbFile { Id = fileId, FileContentText = encryptedContent, IsByte = false };
 
         _mockFileService.Setup(service => service.GetFileByIdAsync(fileId, "test-user-id"))
                        .ReturnsAsync(file);
-        _mockCaesarCipherService.Setup(service => service.DecryptAsync(encryptedContent, key))
+        _mockCaesarCipherService.Setup(service => service.DecryptAsync(encryptedContent, key, language))
                                .ReturnsAsync(decryptedContent);
 
-        var result = await _controller.Decrypt(fileId, key);
+        var result = await _controller.Decrypt(fileId, key, language);
 
         var viewResult = Assert.IsType<ViewResult>(result);
         Assert.Equal("Index", viewResult.ViewName);
@@ -116,14 +118,15 @@ public class CaesarCipherControllerTests
         var encryptedContent = "Khoor";
         var decryptedContent = "Hello";
         var key = 3;
+        var language = "English";
         var file = new DbFile { Id = fileId, FileContentText = encryptedContent, IsByte = false };
 
         _mockFileService.Setup(service => service.GetFileByIdAsync(fileId, "test-user-id"))
                        .ReturnsAsync(file);
-        _mockCaesarCipherService.Setup(service => service.BruteForceAttack(encryptedContent))
+        _mockCaesarCipherService.Setup(service => service.BruteForceAttack(encryptedContent, language))
                                .Returns(new Dictionary<string, int> { { decryptedContent, key } });
 
-        var result = await _controller.Attack(fileId);
+        var result = await _controller.Attack(fileId, language);
 
         var viewResult = Assert.IsType<ViewResult>(result);
         Assert.Equal("Index", viewResult.ViewName);
@@ -138,14 +141,15 @@ public class CaesarCipherControllerTests
     {
         var fileId = 1;
         var encryptedContent = "Khoor";
+        var language = "English";
         var file = new DbFile { Id = fileId, FileContentText = encryptedContent, IsByte = false };
 
         _mockFileService.Setup(service => service.GetFileByIdAsync(fileId, "test-user-id"))
                        .ReturnsAsync(file);
-        _mockCaesarCipherService.Setup(service => service.BruteForceAttack(encryptedContent))
+        _mockCaesarCipherService.Setup(service => service.BruteForceAttack(encryptedContent, language))
                                .Returns(new Dictionary<string, int>());
 
-        var result = await _controller.Attack(fileId);
+        var result = await _controller.Attack(fileId, language);
 
         var viewResult = Assert.IsType<ViewResult>(result);
         Assert.Equal("Index", viewResult.ViewName);

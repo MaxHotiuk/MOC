@@ -12,6 +12,7 @@ namespace Infrastructure.Services
             // Filter out whitespace and punctuation
             var filteredContent = text
                 .Where(c => !char.IsWhiteSpace(c) && !char.IsPunctuation(c))
+                .Select(c => char.ToUpper(c))
                 .ToList();
 
             int totalCharacters = filteredContent.Count;

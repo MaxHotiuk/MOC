@@ -32,7 +32,7 @@ namespace MVC.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Encrypt(int fileId, int key)
+        public async Task<IActionResult> Encrypt(int fileId, int key, string language)
         {
             var file = await _fileService.GetFileByIdAsync(fileId, User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new System.Exception("User not found"));
             if (file == null)
@@ -48,7 +48,7 @@ namespace MVC.Controllers
             }
             else
             {
-                string encryptedText = await _caesarCipherService.EncryptAsync(file.FileContentText ?? throw new Exception("No content in file"), key);
+                string encryptedText = await _caesarCipherService.EncryptAsync(file.FileContentText ?? throw new Exception("No content in file"), key, language);
                 file.FileContentText = encryptedText;
                 await _fileService.UpdateFileAsync(file);
                 ViewBag.FileId = fileId;
@@ -58,7 +58,7 @@ namespace MVC.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Decrypt(int fileId, int key)
+        public async Task<IActionResult> Decrypt(int fileId, int key, string language)
         {
             var file = await _fileService.GetFileByIdAsync(fileId, User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new System.Exception("User not found"));
             if (file == null)
@@ -74,7 +74,7 @@ namespace MVC.Controllers
             }
             else
             {
-                string decryptedText = await _caesarCipherService.DecryptAsync(file.FileContentText ?? throw new Exception("No content in file"), key);
+                string decryptedText = await _caesarCipherService.DecryptAsync(file.FileContentText ?? throw new Exception("No content in file"), key, language);
                 file.FileContentText = decryptedText;
                 await _fileService.UpdateFileAsync(file);
                 ViewBag.FileId = fileId;
@@ -84,7 +84,7 @@ namespace MVC.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Attack(int fileId)
+        public async Task<IActionResult> Attack(int fileId, string language)
         {
             var file = await _fileService.GetFileByIdAsync(fileId, User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new System.Exception("User not found"));
             if (file == null)
@@ -92,7 +92,7 @@ namespace MVC.Controllers
                 return NotFound();
             }
 
-            var (decryptedText, key) = _caesarCipherService.BruteForceAttack(file.FileContentText ?? throw new Exception("No content in file")).FirstOrDefault();
+            var (decryptedText, key) = _caesarCipherService.BruteForceAttack(file.FileContentText ?? throw new Exception("No content in file"), language).FirstOrDefault();
             if (decryptedText != null)
             {
                 file.FileContentText = decryptedText;
