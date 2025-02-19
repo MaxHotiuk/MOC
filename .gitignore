@@ -536,3 +536,5 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+Infrastructure/Data/Database/app.db-shm
+Infrastructure/Data/Database/app.db-wal
