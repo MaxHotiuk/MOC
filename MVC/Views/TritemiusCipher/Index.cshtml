@@ -15,6 +15,7 @@
                                 <option value="encrypt">Encryption</option>
                                 <option value="decrypt">Decryption</option>
                                 <option value="attack">Attack</option>
+                                <option value="frequencyAttack">Frequency Attack</option>
                             </select>
                         </div>
 
@@ -255,6 +256,59 @@
                         </form>
                     </div>
 
+                    <!-- Frequency Attack Section -->
+                    <div id="frequencyAttackSection" style="display:none;">
+                        <form asp-action="FrequencyAttack" method="post">
+                            <div class="card">
+                                <input type="hidden" name="fileId" value="@ViewBag.FileId" />
+                                <div class="card-header">Frequency Attack</div>
+                                <div class="card-body">
+                                    <div class="form-group mb-3">
+                                        <label for="languageFrequencyAttack" class="form-label">Language</label>
+                                        <select id="languageFrequencyAttack" name="language" class="form-control" required>
+                                            <option value="English">English</option>
+                                            <option value="Ukrainian">Ukrainian</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-warning w-100">
+                                        <i class="bi bi-shield-lock me-2"></i>Perform Frequency Attack
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Frequency Attack Results -->
+                    @if (ViewBag.FrequencyAttackResults != null)
+                    {
+                        <div class="mt-4">
+                            <h4 class="h5 mb-3">Frequency Attack Results</h4>
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Offset</th>
+                                        <th>Direction</th>
+                                        <th>Step</th>
+                                        <th>Chi-Squared Score</th>
+                                        <th>Deciphered Text</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var result in ViewBag.FrequencyAttackResults)
+                                    {
+                                        <tr>
+                                            <td>@result.Offset</td>
+                                            <td>@result.Direction</td>
+                                            <td>@result.Step</td>
+                                            <td>@result.ChiSquaredScore</td>
+                                            <td>@result.DecipheredText</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+
                     <!-- Existing Results and File Content Sections -->
                     @if (ViewBag.Key != null)
                     {
@@ -299,37 +353,42 @@
 @section Scripts {
     <script>
         function toggleForms() {
-            const operationSelector = document.getElementById('operationSelector');
-            const encryptSections = document.getElementById('encryptSections');
-            const encryptMethodSelector = document.getElementById('encryptMethodSelector');
-            const decryptSections = document.getElementById('decryptSections');
-            const decryptMethodSelector = document.getElementById('decryptMethodSelector');
-            const attackSection = document.getElementById('attackSection');
+        const operationSelector = document.getElementById('operationSelector');
+        const encryptSections = document.getElementById('encryptSections');
+        const encryptMethodSelector = document.getElementById('encryptMethodSelector');
+        const decryptSections = document.getElementById('decryptSections');
+        const decryptMethodSelector = document.getElementById('decryptMethodSelector');
+        const attackSection = document.getElementById('attackSection');
+        const frequencyAttackSection = document.getElementById('frequencyAttackSection');
 
-            // Hide all sections first
-            encryptSections.style.display = 'none';
-            encryptMethodSelector.style.display = 'none';
-            decryptSections.style.display = 'none';
-            decryptMethodSelector.style.display = 'none';
-            attackSection.style.display = 'none';
+        // Hide all sections first
+        encryptSections.style.display = 'none';
+        encryptMethodSelector.style.display = 'none';
+        decryptSections.style.display = 'none';
+        decryptMethodSelector.style.display = 'none';
+        attackSection.style.display = 'none';
+        frequencyAttackSection.style.display = 'none';
 
-            // Show selected section
-            switch (operationSelector.value) {
-                case 'encrypt':
-                    encryptSections.style.display = 'block';
-                    encryptMethodSelector.style.display = 'block';
-                    toggleEncryptForms(); // Show initial encrypt method
-                    break;
-                case 'decrypt':
-                    decryptSections.style.display = 'block';
-                    decryptMethodSelector.style.display = 'block';
-                    toggleDecryptForms(); // Show initial decrypt method
-                    break;
-                case 'attack':
-                    attackSection.style.display = 'block';
-                    break;
-            }
+        // Show selected section
+        switch (operationSelector.value) {
+            case 'encrypt':
+                encryptSections.style.display = 'block';
+                encryptMethodSelector.style.display = 'block';
+                toggleEncryptForms(); // Show initial encrypt method
+                break;
+            case 'decrypt':
+                decryptSections.style.display = 'block';
+                decryptMethodSelector.style.display = 'block';
+                toggleDecryptForms(); // Show initial decrypt method
+                break;
+            case 'attack':
+                attackSection.style.display = 'block';
+                break;
+            case 'frequencyAttack':
+                frequencyAttackSection.style.display = 'block';
+                break;
         }
+    }
 
         function toggleEncryptForms() {
             const encryptMethod = document.getElementById('encryptMethod');

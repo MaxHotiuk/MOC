@@ -2,14 +2,33 @@ using Core.Interfaces;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Core.Entities;
 
 namespace Infrastructure.Services
 {
     public partial class TritemiusCipherService : ITritemiusCipherService
     {
+        private readonly Dictionary<string, Dictionary<char, double>>? _frequencyData;
+
+        public TritemiusCipherService()
+        {
+            // Load frequency data from the JSON file
+            string filePath = "/Users/maxhotiuk/Desktop/6sem/MOC/MVC/wwwroot/data/frequency_data.json";
+            string jsonData = File.ReadAllText(filePath);
+            _frequencyData = JsonSerializer.Deserialize<Dictionary<string, Dictionary<char, double>>>(jsonData);
+        }
+
+        private Dictionary<char, double> GetExpectedFrequencies(string language)
+        {
+            if (_frequencyData!.ContainsKey(language))
+            {
+                return _frequencyData[language];
+            }
+            throw new ArgumentException($"Frequency data for language '{language}' not found.");
+        }
         private static char[] Alphabet(string language)
         {
-            char[] englishAlphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ' ', ',', '.', '!', '?', ':', ';', '(', ')', '-', '"'];
+            char[] englishAlphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];//, 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ' ', ',', '.', '!', '?', ':', ';', '(', ')', '-', '"'];
             char[] ukrainianAlphabet = ['а', 'б', 'в', 'г', 'ґ', 'д', 'е', 'є', 'ж', 'з', 'и', 'і', 'ї', 'й', 'к', 'л', 'м', 'н', 'о', 'п', 'р', 'с', 'т', 'у', 'ф', 'х', 'ц', 'ч', 'ш', 'щ', 'ь', 'ю', 'я', 'А', 'Б', 'В', 'Г', 'Ґ', 'Д', 'Е', 'Є', 'Ж', 'З', 'И', 'І', 'Ї', 'Й', 'К', 'Л', 'М', 'Н', 'О', 'П', 'Р', 'С', 'Т', 'У', 'Ф', 'Х', 'Ц', 'Ч', 'Ш', 'Щ', 'Ь', 'Ю', 'Я', ' ', ',', '.', '!', '?', ':', ';', '(', ')', '-', '"'];
             return language == "English" ? englishAlphabet : ukrainianAlphabet;
         }
@@ -105,6 +124,78 @@ namespace Infrastructure.Services
 
             // Exhaustive search if initial methods fail
             return ExhaustiveKeySearch(plainText, encryptedText, alphabet);
+        }
+
+        public List<FrequencyAttackResult> FrequencyAttack(string ciphertext, string language)
+        {
+            char[] alphabet = Alphabet(language);
+            var cipher = new TrithemiusCipher(alphabet);
+            var results = new List<FrequencyAttackResult>();
+
+            for (int testOffset = 0; testOffset < alphabet.Length; testOffset++)
+            {
+                for (int testDirection = -1; testDirection <= 1; testDirection += 2)
+                {
+                    for (int testStep = 0; testStep < alphabet.Length; testStep++)
+                    {
+                        var key = new TrithemiusCipher.LinKey
+                        {
+                            A = testStep,
+                            B = testOffset,
+                            keyType = TrithemiusCipher.Key.KeyType.LinearAquestion
+                        };
+
+                        string decipheredText = cipher.Trithemius(ciphertext, TrithemiusCipher.Operation.Decrypt, key);
+                        double chiSquaredScore = ChiSquaredScore(decipheredText, language);
+
+                        results.Add(new FrequencyAttackResult
+                        {
+                            Offset = testOffset,
+                            Direction = testDirection,
+                            Step = testStep,
+                            ChiSquaredScore = chiSquaredScore,
+                            DecipheredText = decipheredText
+                        });
+                    }
+                }
+            }
+
+            return results.OrderBy(r => r.ChiSquaredScore).ToList();
+        }
+
+        private Dictionary<char, int> GetObservedFrequencies(string text, string language)
+        {
+            var frequencies = new Dictionary<char, int>();
+            var expectedFrequencies = GetExpectedFrequencies(language);
+
+            foreach (char c in text.ToLower())
+            {
+                if (expectedFrequencies.ContainsKey(c))
+                {
+                    if (frequencies.ContainsKey(c))
+                        frequencies[c]++;
+                    else
+                        frequencies[c] = 1;
+                }
+            }
+
+            return frequencies;
+        }
+
+        private double ChiSquaredScore(string text, string language)
+        {
+            var expectedFrequencies = GetExpectedFrequencies(language);
+            var observedFrequencies = GetObservedFrequencies(text, language);
+
+            double chiSquared = 0;
+            foreach (var key in expectedFrequencies.Keys)
+            {
+                double expected = expectedFrequencies[key];
+                double observed = observedFrequencies.ContainsKey(key) ? observedFrequencies[key] : 0;
+                chiSquared += Math.Pow(observed - expected, 2) / expected;
+            }
+
+            return chiSquared;
         }
 
         private (int? A, int B, int C)? ExhaustiveKeySearch(string plainText, string encryptedText, char[] alphabet)

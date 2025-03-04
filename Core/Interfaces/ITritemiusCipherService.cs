@@ -1,3 +1,5 @@
+using Core.Entities;
+
 namespace Core.Interfaces
 {
     public interface ITritemiusCipherService
@@ -8,6 +10,7 @@ namespace Core.Interfaces
         Task<string> DecryptAsync(string text, int a, int b, int c, string language);
         Task<string> EncryptAsync(string text, string gaslo, string language);
         Task<string> DecryptAsync(string text, string gaslo, string language);
+        List<FrequencyAttackResult> FrequencyAttack(string ciphertext, string language);
         (int? A, int B, int C)? FindKey(string plainText, string encryptedText, string language);
     }
 }

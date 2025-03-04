@@ -217,6 +217,24 @@ namespace MVC.Controllers
             return View("Index");
         }
 
+        [HttpPost]
+        public async Task<IActionResult> FrequencyAttack(string language, int fileId)
+        {
+            var file = await _fileService.GetFileByIdAsync(fileId, User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? throw new System.Exception("User not found"));
+            if (file == null)
+            {
+                return NotFound();
+            }
+
+            var results = _tritemiusCipherService.FrequencyAttack(file.FileContentText!, language);
+
+            ViewBag.FileId = fileId;
+            ViewBag.FileContent = file.FileContentText ?? "No content in file";
+            ViewBag.FrequencyAttackResults = results;
+
+            return View("Index");
+        }
+
         // Brute Force Attack
         [HttpPost]
         public async Task<IActionResult> Attack(string plainText, string encryptedText, string language, int fileId)
