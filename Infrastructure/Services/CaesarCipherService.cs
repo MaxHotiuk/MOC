@@ -44,7 +44,7 @@ namespace Infrastructure.Services
         {
             var validResults = new Dictionary<string, int>();
             int max_key = language == "English" ? 36 : 43;
-            for (int key = 0; key <= 33; key++)
+            for (int key = 0; key <= max_key; key++)
             {
                 string decryptedText = DecryptAsync(text, key, language).Result;
                 if (IsValidText(decryptedText, _englishDictionary) || IsValidText(decryptedText, _ukrainianDictionary))

@@ -35,6 +35,7 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<ICaesarCipherService, CaesarCipherService>();
 builder.Services.AddScoped<IFrequencyService, FrequencyService>();
+builder.Services.AddScoped<ITritemiusCipherService, TritemiusCipherService>();
 
 builder.Services.AddControllersWithViews();
 
@@ -49,7 +50,7 @@ if (!Directory.Exists(databasePath))
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    dbContext.Database.Migrate();
+    //dbContext.Database.Migrate();
 }
 
 if (!app.Environment.IsDevelopment())

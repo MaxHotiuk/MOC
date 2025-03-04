@@ -187,6 +187,8 @@ namespace MVC.Controllers
             {
                 case "Caesar":
                     return RedirectToAction("Index", "CaesarCipher", new { fileId });
+                case "Tritemius":
+                    return RedirectToAction("Index", "TritemiusCipher", new { fileId });
                 default:
                     return RedirectToAction("Files");
             }

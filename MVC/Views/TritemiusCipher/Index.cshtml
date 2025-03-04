@@ -1,0 +1,389 @@
+@{
+    ViewData["Title"] = "Cryptography Interface";
+}
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card">
+                <div class="card-body">
+                    <!-- Method Selector -->
+                    <div class="mb-4">
+                        <div class="form-group">
+                            <label class="form-label">Select Operation</label>
+                            <select id="operationSelector" class="form-control" onchange="toggleForms()">
+                                <option value="encrypt">Encryption</option>
+                                <option value="decrypt">Decryption</option>
+                                <option value="attack">Attack</option>
+                            </select>
+                        </div>
+
+                        <!-- Encryption Method Selector -->
+                        <div id="encryptMethodSelector" class="form-group mt-3" style="display:none;">
+                            <label class="form-label">Select Encryption Method</label>
+                            <select id="encryptMethod" class="form-control" onchange="toggleEncryptForms()">
+                                <option value="linear">Linear Encryption</option>
+                                <option value="quadratic">Quadratic Encryption</option>
+                                <option value="keyword">Keyword Encryption</option>
+                            </select>
+                        </div>
+
+                        <!-- Decryption Method Selector -->
+                        <div id="decryptMethodSelector" class="form-group mt-3" style="display:none;">
+                            <label class="form-label">Select Decryption Method</label>
+                            <select id="decryptMethod" class="form-control" onchange="toggleDecryptForms()">
+                                <option value="linear">Linear Decryption</option>
+                                <option value="quadratic">Quadratic Decryption</option>
+                                <option value="keyword">Keyword Decryption</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Encryption Sections -->
+                    <div id="encryptSections" style="display:none;">
+                        <!-- Linear Encryption Form -->
+                        <div id="linearEncryptSection">
+                            <form asp-action="EncryptLinear" method="post">
+                                <div class="card">
+                                    <input type="hidden" name="fileId" value="@ViewBag.FileId" />
+                                    <div class="card-header">Linear Encryption</div>
+                                    <div class="card-body">
+                                        <div class="form-group mb-3">
+                                            <label for="languageEncryptLinear" class="form-label">Language</label>
+                                            <select id="languageEncryptLinear" name="language" class="form-control" required>
+                                                <option value="English">English</option>
+                                                <option value="Ukrainian">Ukrainian</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group mb-3">
+                                            <label for="aEncryptLinear" class="form-label">A (Linear coefficient)</label>
+                                            <input type="number" id="aEncryptLinear" name="a" class="form-control" required />
+                                        </div>
+                                        <div class="form-group mb-3">
+                                            <label for="bEncryptLinear" class="form-label">B (Linear shift)</label>
+                                            <input type="number" id="bEncryptLinear" name="b" class="form-control" required />
+                                        </div>
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            <i class="bi bi-lock me-2"></i>Encrypt Linear
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Quadratic Encryption Form -->
+                        <div id="quadraticEncryptSection" style="display:none;">
+                            <form asp-action="EncryptQuadratic" method="post">
+                                <div class="card">
+                                    <input type="hidden" name="fileId" value="@ViewBag.FileId" />
+                                    <div class="card-header">Quadratic Encryption</div>
+                                    <div class="card-body">
+                                        <div class="form-group mb-3">
+                                            <label for="languageEncryptQuadratic" class="form-label">Language</label>
+                                            <select id="languageEncryptQuadratic" name="language" class="form-control" required>
+                                                <option value="English">English</option>
+                                                <option value="Ukrainian">Ukrainian</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group mb-3">
+                                            <label for="aEncryptQuadratic" class="form-label">A (Quadratic coefficient)</label>
+                                            <input type="number" id="aEncryptQuadratic" name="a" class="form-control" required />
+                                        </div>
+                                        <div class="form-group mb-3">
+                                            <label for="bEncryptQuadratic" class="form-label">B (Linear shift)</label>
+                                            <input type="number" id="bEncryptQuadratic" name="b" class="form-control" required />
+                                        </div>
+                                        <div class="form-group mb-3">
+                                            <label for="cEncryptQuadratic" class="form-label">C (Constant shift)</label>
+                                            <input type="number" id="cEncryptQuadratic" name="c" class="form-control" required />
+                                        </div>
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            <i class="bi bi-lock me-2"></i>Encrypt Quadratic
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Keyword Encryption Form -->
+                        <div id="keywordEncryptSection" style="display:none;">
+                            <form asp-action="EncryptKeyword" method="post">
+                                <div class="card">
+                                    <input type="hidden" name="fileId" value="@ViewBag.FileId" />
+                                    <div class="card-header">Keyword Encryption</div>
+                                    <div class="card-body">
+                                        <div class="form-group mb-3">
+                                            <label for="languageEncryptKeyword" class="form-label">Language</label>
+                                            <select id="languageEncryptKeyword" name="language" class="form-control" required>
+                                                <option value="English">English</option>
+                                                <option value="Ukrainian">Ukrainian</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group mb-3">
+                                            <label for="keywordEncrypt" class="form-label">Keyword</label>
+                                            <input type="text" id="keywordEncrypt" name="keyword" class="form-control" required />
+                                        </div>
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            <i class="bi bi-lock me-2"></i>Encrypt Keyword
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Decryption Sections -->
+                    <div id="decryptSections" style="display:none;">
+                        <!-- Linear Decryption Form -->
+                        <div id="linearDecryptSection">
+                            <form asp-action="DecryptLinear" method="post">
+                                <div class="card">
+                                    <input type="hidden" name="fileId" value="@ViewBag.FileId" />
+                                    <div class="card-header">Linear Decryption</div>
+                                    <div class="card-body">
+                                        <div class="form-group mb-3">
+                                            <label for="languageDecryptLinear" class="form-label">Language</label>
+                                            <select id="languageDecryptLinear" name="language" class="form-control" required>
+                                                <option value="English">English</option>
+                                                <option value="Ukrainian">Ukrainian</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group mb-3">
+                                            <label for="aDecryptLinear" class="form-label">A (Linear coefficient)</label>
+                                            <input type="number" id="aDecryptLinear" name="a" class="form-control" required />
+                                        </div>
+                                        <div class="form-group mb-3">
+                                            <label for="bDecryptLinear" class="form-label">B (Linear shift)</label>
+                                            <input type="number" id="bDecryptLinear" name="b" class="form-control" required />
+                                        </div>
+                                        <button type="submit" class="btn btn-success w-100">
+                                            <i class="bi bi-unlock me-2"></i>Decrypt Linear
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Quadratic Decryption Form -->
+                        <div id="quadraticDecryptSection" style="display:none;">
+                            <form asp-action="DecryptQuadratic" method="post">
+                                <div class="card">
+                                    <input type="hidden" name="fileId" value="@ViewBag.FileId" />
+                                    <div class="card-header">Quadratic Decryption</div>
+                                    <div class="card-body">
+                                        <div class="form-group mb-3">
+                                            <label for="languageDecryptQuadratic" class="form-label">Language</label>
+                                            <select id="languageDecryptQuadratic" name="language" class="form-control" required>
+                                                <option value="English">English</option>
+                                                <option value="Ukrainian">Ukrainian</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group mb-3">
+                                            <label for="aDecryptQuadratic" class="form-label">A (Quadratic coefficient)</label>
+                                            <input type="number" id="aDecryptQuadratic" name="a" class="form-control" required />
+                                        </div>
+                                        <div class="form-group mb-3">
+                                            <label for="bDecryptQuadratic" class="form-label">B (Linear shift)</label>
+                                            <input type="number" id="bDecryptQuadratic" name="b" class="form-control" required />
+                                        </div>
+                                        <div class="form-group mb-3">
+                                            <label for="cDecryptQuadratic" class="form-label">C (Constant shift)</label>
+                                            <input type="number" id="cDecryptQuadratic" name="c" class="form-control" required />
+                                        </div>
+                                        <button type="submit" class="btn btn-success w-100">
+                                            <i class="bi bi-unlock me-2"></i>Decrypt Quadratic
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Keyword Decryption Form -->
+                        <div id="keywordDecryptSection" style="display:none;">
+                            <form asp-action="DecryptKeyword" method="post">
+                                <div class="card">
+                                    <input type="hidden" name="fileId" value="@ViewBag.FileId" />
+                                    <div class="card-header">Keyword Decryption</div>
+                                    <div class="card-body">
+                                        <div class="form-group mb-3">
+                                            <label for="languageDecryptKeyword" class="form-label">Language</label>
+                                            <select id="languageDecryptKeyword" name="language" class="form-control" required>
+                                                <option value="English">English</option>
+                                                <option value="Ukrainian">Ukrainian</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group mb-3">
+                                            <label for="keywordDecrypt" class="form-label">Keyword</label>
+                                            <input type="text" id="keywordDecrypt" name="keyword" class="form-control" required />
+                                        </div>
+                                        <button type="submit" class="btn btn-success w-100">
+                                            <i class="bi bi-unlock me-2"></i>Decrypt Keyword
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Attack Section -->
+                    <div id="attackSection" style="display:none;">
+                        <form asp-action="Attack" method="post">
+                            <div class="card">
+                                <input type="hidden" name="fileId" value="@ViewBag.FileId" />
+                                <div class="card-header">Cryptanalysis</div>
+                                <div class="card-body">
+                                    <div class="form-group mb-3">
+                                        <label for="plainText" class="form-label">Plain Text</label>
+                                        <input type="text" id="plainText" name="plainText" class="form-control" required />
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label for="encryptedText" class="form-label">Encrypted Text</label>
+                                        <input type="text" id="encryptedText" name="encryptedText" class="form-control" required />
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label for="languageAttack" class="form-label">Language</label>
+                                        <select id="languageAttack" name="language" class="form-control" required>
+                                            <option value="English">English</option>
+                                            <option value="Ukrainian">Ukrainian</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-warning w-100">
+                                        <i class="bi bi-shield-lock me-2"></i>Attack
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Existing Results and File Content Sections -->
+                    @if (ViewBag.Key != null)
+                    {
+                        <div class="alert alert-success mt-4">
+                            <h4 class="h5 mb-2">Decryption Successful</h4>
+                            <p class="mb-0">Decryption Key: <strong>@ViewBag.Key</strong></p>
+                        </div>
+                    }
+
+                    @if (ViewBag.Error != null)
+                    {
+                        <div class="alert alert-danger mt-4">
+                            <h4 class="h5 mb-2">Error</h4>
+                            <p class="mb-0">@ViewBag.Error</p>
+                        </div>
+                    }
+
+                    <div class="mt-4">
+                        <button class="btn btn-info w-100" type="button" data-bs-toggle="collapse" data-bs-target="#fileContentCollapse" aria-expanded="false" aria-controls="fileContentCollapse">
+                            <i class="bi bi-file-text me-2"></i>Show/Hide File Content
+                        </button>
+
+                        <div class="collapse mt-3" id="fileContentCollapse">
+                            <div class="card card-body">
+                                <h4 class="h5 mb-3">File Content</h4>
+                                <pre class="mb-0">@ViewBag.FileContent</pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <a asp-controller="EncryptDecrypt" asp-action="Files" class="btn btn-outline-secondary w-100">
+                            <i class="bi bi-arrow-left me-2"></i>Back to Files
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function toggleForms() {
+            const operationSelector = document.getElementById('operationSelector');
+            const encryptSections = document.getElementById('encryptSections');
+            const encryptMethodSelector = document.getElementById('encryptMethodSelector');
+            const decryptSections = document.getElementById('decryptSections');
+            const decryptMethodSelector = document.getElementById('decryptMethodSelector');
+            const attackSection = document.getElementById('attackSection');
+
+            // Hide all sections first
+            encryptSections.style.display = 'none';
+            encryptMethodSelector.style.display = 'none';
+            decryptSections.style.display = 'none';
+            decryptMethodSelector.style.display = 'none';
+            attackSection.style.display = 'none';
+
+            // Show selected section
+            switch (operationSelector.value) {
+                case 'encrypt':
+                    encryptSections.style.display = 'block';
+                    encryptMethodSelector.style.display = 'block';
+                    toggleEncryptForms(); // Show initial encrypt method
+                    break;
+                case 'decrypt':
+                    decryptSections.style.display = 'block';
+                    decryptMethodSelector.style.display = 'block';
+                    toggleDecryptForms(); // Show initial decrypt method
+                    break;
+                case 'attack':
+                    attackSection.style.display = 'block';
+                    break;
+            }
+        }
+
+        function toggleEncryptForms() {
+            const encryptMethod = document.getElementById('encryptMethod');
+            const linearSection = document.getElementById('linearEncryptSection');
+            const quadraticSection = document.getElementById('quadraticEncryptSection');
+            const keywordSection = document.getElementById('keywordEncryptSection');
+
+            // Hide all encrypt sections
+            linearSection.style.display = 'none';
+            quadraticSection.style.display = 'none';
+            keywordSection.style.display = 'none';
+
+            // Show selected encrypt method
+            switch (encryptMethod.value) {
+                case 'linear':
+                    linearSection.style.display = 'block';
+                    break;
+                case 'quadratic':
+                    quadraticSection.style.display = 'block';
+                    break;
+                case 'keyword':
+                    keywordSection.style.display = 'block';
+                    break;
+            }
+        }
+
+        function toggleDecryptForms() {
+            const decryptMethod = document.getElementById('decryptMethod');
+            const linearSection = document.getElementById('linearDecryptSection');
+            const quadraticSection = document.getElementById('quadraticDecryptSection');
+            const keywordSection = document.getElementById('keywordDecryptSection');
+
+            // Hide all decrypt sections
+            linearSection.style.display = 'none';
+            quadraticSection.style.display = 'none';
+            keywordSection.style.display = 'none';
+
+            // Show selected decrypt method
+            switch (decryptMethod.value) {
+                case 'linear':
+                    linearSection.style.display = 'block';
+                    break;
+                case 'quadratic':
+                    quadraticSection.style.display = 'block';
+                    break;
+                case 'keyword':
+                    keywordSection.style.display = 'block';
+                    break;
+            }
+        }
+
+        // Initialize form on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleForms();
+        });
+    </script>
+}
