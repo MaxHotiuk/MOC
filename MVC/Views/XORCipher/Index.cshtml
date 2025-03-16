@@ -1,0 +1,239 @@
+@model dynamic
+@{
+    ViewData["Title"] = "XOR Cipher";
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4>XOR Cipher - Stream Cipher</h4>
+                </div>
+                <div class="card-body">
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success">
+                            @TempData["SuccessMessage"]
+                        </div>
+                    }
+                    
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger">
+                            @TempData["ErrorMessage"]
+                        </div>
+                    }
+                    
+                    @if (TempData["OneTimePad"] != null)
+                    {
+                        <div class="alert alert-warning">
+                            <h5>Your One-Time Pad (Save this securely!)</h5>
+                            <div class="input-group mb-3">
+                                <input type="text" id="oneTimePadValue" class="form-control" value="@TempData["OneTimePad"]" readonly>
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('oneTimePadValue')">Copy</button>
+                                    <a href="@Url.Action("DownloadOneTimePad", new { pad = TempData["OneTimePad"] })" class="btn btn-outline-primary">Download</a>
+                                </div>
+                            </div>
+                            <div id="copyNotification" class="text-success" style="display: none;">
+                                <i class="fas fa-check-circle"></i> One-time pad copied to clipboard!
+                            </div>
+                            <p class="text-danger mb-0">
+                                <strong>Important:</strong> This key will not be shown again. Keep it secure for decryption.
+                            </p>
+                        </div>
+                    }
+                    
+                    <ul class="nav nav-tabs" id="cipherTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="encrypt-tab" data-toggle="tab" href="#encrypt" role="tab" aria-controls="encrypt" aria-selected="true">Encrypt</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="decrypt-tab" data-toggle="tab" href="#decrypt" role="tab" aria-controls="decrypt" aria-selected="false">Decrypt</a>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content" id="cipherTabsContent">
+                        <!-- Encrypt Tab -->
+                        <div class="tab-pane fade show active" id="encrypt" role="tabpanel" aria-labelledby="encrypt-tab">
+                            <div class="card-body">
+                                <form asp-action="Encrypt" method="post">
+                                    <input type="hidden" name="fileId" value="@ViewBag.FileId" />
+                                    
+                                    <div class="form-group">
+                                        <label>Encryption Method</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="encryptionMethod" id="standardXOR" value="standard" checked>
+                                            <label class="form-check-label" for="standardXOR">
+                                                Standard XOR (Repeating Key)
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="encryptionMethod" id="oneTimePad" value="oneTimePad">
+                                            <label class="form-check-label" for="oneTimePad">
+                                                One-Time Pad (Vernam Cipher)
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div id="standardKeyInput" class="form-group">
+                                        <label>Encryption Key (Gamma)</label>
+                                        <input type="text" name="gamma" class="form-control" placeholder="Enter key (gamma)" value="@TempData["Gamma"]" />
+                                        <small class="form-text text-muted">For standard XOR, the key is repeated cyclically</small>
+                                    </div>
+                                    
+                                    <div id="oneTimePadInput" class="form-group" style="display: none;">
+                                        <label>One-Time Pad Options</label>
+                                        <div class="alert alert-info">
+                                            <p>The Vernam Cipher (One-Time Pad) uses a completely random key with a length not less than the message.</p>
+                                            <p>During encryption, a random key will be generated, which must be saved for subsequent decryption.</p>
+                                        </div>
+                                        <input type="hidden" name="useOneTimePad" value="true" />
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label>Language</label>
+                                        <select name="language" class="form-control">
+                                            <option value="English">English</option>
+                                            <option value="Ukrainian">Ukrainian</option>
+                                        </select>
+                                    </div>
+                                    <div style="margin-top: 10px;">
+                                        <button type="submit" class="btn btn-primary">Encrypt</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        <!-- Decrypt Tab -->
+                        <div class="tab-pane fade" id="decrypt" role="tabpanel" aria-labelledby="decrypt-tab">
+                            <div class="card-body">
+                                <form asp-action="Decrypt" method="post">
+                                    <input type="hidden" name="fileId" value="@ViewBag.FileId" />
+                                    
+                                    <div class="form-group">
+                                        <label>Decryption Key (Gamma / One-Time Pad)</label>
+                                        <input type="text" name="gamma" class="form-control" required placeholder="Enter key" value="@TempData["Gamma"]" />
+                                        <small class="form-text text-muted">Enter the key used for encryption. For one-time pad, paste the full pad</small>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label>Language</label>
+                                        <select name="language" class="form-control">
+                                            <option value="English">English</option>
+                                            <option value="Ukrainian">Ukrainian</option>
+                                        </select>
+                                    </div>
+                                    <div style="margin-top: 10px;">
+                                        <button type="submit" class="btn btn-success">Decrypt</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- File Content -->
+                    <div class="mt-4">
+                        <h5>Current File Content:</h5>
+                        <button class="btn btn-info mb-3" type="button" onclick="toggleFileContent()">Show/Hide File Content</button>
+                        <div id="fileContent" class="border p-3 bg-light" style="display: none;">
+                            <pre style="white-space: pre-wrap; word-break: break-word;">@ViewBag.FileContent</pre>
+                        </div>
+                    </div>        
+                    <!-- Encryption Methods Information -->
+                    <div class="card mt-4">
+                        <div class="card-header bg-secondary text-white">
+                            <h5>Encryption Methods Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <h6>Standard XOR (Stream Cipher)</h6>
+                            <p>Stream Cipher is a cryptography method where text characters are sequentially combined with characters of a special sequence (gamma).</p>
+                            <p>Main formula: <code>z = x ⊕ g</code> (XOR operation)</p>
+                            <p>Features:</p>
+                            <ul>
+                                <li>The key is repeated cyclically if its length is less than the message length.</li>
+                                <li>XOR is a symmetric operation, so the encryption and decryption processes are identical.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function toggleFileContent() {
+            var fileContentDiv = document.getElementById('fileContent');
+            if (fileContentDiv.style.display === 'none') {
+                fileContentDiv.style.display = 'block';
+            } else {
+                fileContentDiv.style.display = 'none';
+            }
+        }
+        
+        function copyToClipboard(elementId) {
+            var element = document.getElementById(elementId);
+            element.select();
+            document.execCommand('copy');
+            
+            // Show temporary notification
+            var notification = document.getElementById('copyNotification');
+            notification.style.display = 'block';
+            
+            // Hide notification after 3 seconds
+            setTimeout(function() {
+                notification.style.opacity = '1';
+                fadeOut(notification, 500);
+            }, 1500);
+        }
+        
+        function fadeOut(element, duration) {
+            var opacity = 1;
+            var interval = 50;
+            var gap = interval / duration;
+            
+            function decrease() {
+                opacity = opacity - gap;
+                element.style.opacity = opacity;
+                
+                if(opacity <= 0) {
+                    element.style.display = 'none';
+                    element.style.opacity = '1';
+                    clearInterval(fading);
+                }
+            }
+            
+            var fading = setInterval(decrease, interval);
+        }
+        
+        $(document).ready(function() {
+            // Save the active tab in local storage
+            var activeTab = localStorage.getItem('activeXorCipherTab');
+            if (activeTab) {
+                $('#cipherTabs a[href="' + activeTab + '"]').tab('show');
+            }
+
+            // Save the selected tab when switching
+            $('#cipherTabs a').on('click', function (e) {
+                e.preventDefault();
+                var currentTab = $(this).attr('href');
+                localStorage.setItem('activeXorCipherTab', currentTab);
+                $(this).tab('show');
+            });
+            
+            // Toggle form display based on the selected encryption method
+            $('input[name="encryptionMethod"]').change(function() {
+                if ($(this).val() === 'oneTimePad') {
+                    $('#standardKeyInput').hide();
+                    $('#oneTimePadInput').show();
+                } else {
+                    $('#standardKeyInput').show();
+                    $('#oneTimePadInput').hide();
+                }
+            });
+        });
+    </script>
+}

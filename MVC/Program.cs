@@ -36,6 +36,7 @@ builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<ICaesarCipherService, CaesarCipherService>();
 builder.Services.AddScoped<IFrequencyService, FrequencyService>();
 builder.Services.AddScoped<ITritemiusCipherService, TritemiusCipherService>();
+builder.Services.AddScoped<IXORCipherService, XORCipherService>();
 
 builder.Services.AddControllersWithViews();
 
