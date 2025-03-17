@@ -36,19 +36,25 @@ namespace MVC.Controllers
                 if (file == null)
                     return NotFound("File not found");
 
+                if (string.IsNullOrEmpty(file.FileContentText))
+                {
+                    TempData["ErrorMessage"] = "File content is empty or null.";
+                    return RedirectToAction("Index", new { fileId });
+                }
+
                 string encryptionKey = gamma;
                 
                 // If using one-time pad, generate a random key
                 if (useOneTimePad)
                 {
-                    string oneTimePad = _xorCipherService.GenerateOneTimePad(file.FileContentText!.Length, language);
+                    string oneTimePad = _xorCipherService.GenerateOneTimePad(file.FileContentText.Length, language);
                     encryptionKey = "OTP:" + oneTimePad;
                     
                     // Store the one-time pad for user to save
                     TempData["OneTimePad"] = oneTimePad;
                 }
 
-                string encryptedText = await _xorCipherService.EncryptAsync(file.FileContentText!, encryptionKey, language);
+                string encryptedText = await _xorCipherService.EncryptAsync(file.FileContentText, encryptionKey, language);
                 
                 // Update file with encrypted text
                 file.FileContentText = encryptedText;
@@ -70,7 +76,7 @@ namespace MVC.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Decrypt(int fileId, string gamma, string language)
+        public async Task<IActionResult> Decrypt(int fileId, string gamma, string language, bool isOneTimePad = false)
         {
             try
             {
@@ -80,10 +86,7 @@ namespace MVC.Controllers
                 if (file == null)
                     return NotFound("File not found");
                 
-                // Automatically detect if this is a one-time pad based on input
-                string decryptionKey = gamma.StartsWith("OTP:") ? gamma : 
-                                      (gamma.Length > 20) ? "OTP:" + gamma : gamma;
-                
+                string decryptionKey = isOneTimePad ? "OTP:" + gamma : gamma;
                 string decryptedText = await _xorCipherService.DecryptAsync(file.FileContentText!, decryptionKey, language);
                 
                 // Update file with decrypted text

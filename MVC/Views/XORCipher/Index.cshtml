@@ -62,7 +62,7 @@
                                     <input type="hidden" name="fileId" value="@ViewBag.FileId" />
                                     
                                     <div class="form-group">
-                                        <label>Encryption Method</label>
+                                        <label>Encryption</label>
                                         <div class="form-check">
                                             <input class="form-check-input" type="radio" name="encryptionMethod" id="standardXOR" value="standard" checked>
                                             <label class="form-check-label" for="standardXOR">
@@ -86,7 +86,7 @@
                                     <div id="oneTimePadInput" class="form-group" style="display: none;">
                                         <label>One-Time Pad Options</label>
                                         <div class="alert alert-info">
-                                            <p>The Vernam Cipher (One-Time Pad) uses a completely random key with a length not less than the message.</p>
+                                            <p>Uses a completely random key with a length not less than the message.</p>
                                             <p>During encryption, a random key will be generated, which must be saved for subsequent decryption.</p>
                                         </div>
                                         <input type="hidden" name="useOneTimePad" value="true" />
@@ -113,8 +113,8 @@
                                     <input type="hidden" name="fileId" value="@ViewBag.FileId" />
                                     
                                     <div class="form-group">
-                                        <label>Decryption Key (Gamma / One-Time Pad)</label>
-                                        <input type="text" name="gamma" class="form-control" required placeholder="Enter key" value="@TempData["Gamma"]" />
+                                        <label>Decryption</label>
+                                        <div class="form-check"></div>
                                         <small class="form-text text-muted">Enter the key used for encryption. For one-time pad, paste the full pad</small>
                                     </div>
                                     
