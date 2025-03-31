@@ -125,7 +125,6 @@ namespace Infrastructure.Services
             return extendedGamma.ToString();
         }
 
-        // Метод для генерації випадкового одноразового блокноту
         public string GenerateOneTimePad(int length, string language)
         {
             if (!_alphabets.ContainsKey(language))
@@ -136,7 +135,7 @@ namespace Infrastructure.Services
             
             using (var rng = RandomNumberGenerator.Create())
             {
-                byte[] bytes = new byte[length * 2]; // Використовуємо більше байтів для кращої випадковості
+                byte[] bytes = new byte[length * 2];
                 rng.GetBytes(bytes);
                 
                 for (int i = 0; i < length; i++)
@@ -149,7 +148,6 @@ namespace Infrastructure.Services
             return result.ToString();
         }
 
-        // Допоміжний метод для відображення двійкових представлень індексів у алфавіті
         public Dictionary<char, string> GetBinaryIndices(string language)
         {
             if (!_alphabets.ContainsKey(language))
