@@ -32,6 +32,8 @@ namespace MVC.Models
         public KeyImportModel KeyImport { get; set; } = new KeyImportModel();
         
         public bool HasKeys => !string.IsNullOrEmpty(PublicKey) && !string.IsNullOrEmpty(PrivateKey);
+        public bool HasPublicKey => !string.IsNullOrEmpty(PublicKey);
+        public bool HasPrivateKey => !string.IsNullOrEmpty(PrivateKey) && !string.IsNullOrEmpty(Modulus) && !string.IsNullOrEmpty(Multiplier);
     }
     
     public class KeyImportModel

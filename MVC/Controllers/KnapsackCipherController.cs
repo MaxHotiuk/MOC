@@ -131,20 +131,13 @@ namespace MVC.Controllers
                     return RedirectToAction("Index", new { fileId });
                 }
 
-                // Get public key from database
                 if (string.IsNullOrEmpty(file.PublicKeyJson))
                 {
-                    TempData["ErrorMessage"] = "Public key not found. Please generate keys first.";
+                    TempData["ErrorMessage"] = "Public key not found. Please generate or import keys first.";
                     return RedirectToAction("Index", new { fileId });
                 }
                 
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true,
-                    NumberHandling = JsonNumberHandling.AllowReadingFromString
-                };
-                
-                var publicKey = JsonSerializer.Deserialize<List<int>>(file.PublicKeyJson, options);
+                var publicKey = JsonSerializer.Deserialize<List<int>>(file.PublicKeyJson);
                 
                 if (publicKey == null)
                 {
@@ -152,18 +145,15 @@ namespace MVC.Controllers
                     return RedirectToAction("Index", new { fileId });
                 }
                 
-                // Encrypt the message
                 var encryptedNumbers = _knapsackCipherService.Encrypt(file.FileContentText, publicKey, language);
                 string encryptedMessage = string.Join(" ", encryptedNumbers);
                 
-                // Save encryption process details for display
                 var processDetails = new StringBuilder();
                 processDetails.AppendLine("Original message: " + file.FileContentText);
                 processDetails.AppendLine("Public key: " + string.Join(", ", publicKey));
                 processDetails.AppendLine("Encrypted numbers: " + string.Join(", ", encryptedNumbers));
                 TempData["EncryptionProcess"] = processDetails.ToString();
                 
-                // Update file content with encrypted text
                 file.FileContentText = encryptedMessage;
                 await _fileService.UpdateFileAsync(file);
                 
@@ -189,10 +179,9 @@ namespace MVC.Controllers
                 if (file == null)
                     return NotFound("File not found");
                 
-                // Get keys from database
                 if (string.IsNullOrEmpty(file.PrivateKeyJson) || string.IsNullOrEmpty(file.Modulus) || string.IsNullOrEmpty(file.Multiplier))
                 {
-                    TempData["ErrorMessage"] = "Private key, modulus or multiplier not found. Please generate keys first.";
+                    TempData["ErrorMessage"] = "Private key, modulus, or multiplier not found. Please generate or import keys first.";
                     return RedirectToAction("Index", new { fileId });
                 }
                 
@@ -200,16 +189,13 @@ namespace MVC.Controllers
                 var n = int.Parse(file.Modulus);
                 var m = int.Parse(file.Multiplier);
                 
-                // Parse encrypted numbers
                 var encryptedNumbers = file.FileContentText!.Split(' ')
                     .Where(s => !string.IsNullOrWhiteSpace(s))
                     .Select(int.Parse)
                     .ToList();
                 
-                // Decrypt the message
                 string decryptedMessage = _knapsackCipherService.Decrypt(encryptedNumbers, privateKey!, m, n, language);
                 
-                // Save decryption process details for display
                 var processDetails = new StringBuilder();
                 processDetails.AppendLine("Encrypted numbers: " + file.FileContentText);
                 processDetails.AppendLine("Private key: " + string.Join(", ", privateKey!));
@@ -218,7 +204,6 @@ namespace MVC.Controllers
                 processDetails.AppendLine("Decrypted message: " + decryptedMessage);
                 TempData["DecryptionProcess"] = processDetails.ToString();
                 
-                // Update file content with decrypted text
                 file.FileContentText = decryptedMessage;
                 await _fileService.UpdateFileAsync(file);
                 
@@ -276,132 +261,183 @@ namespace MVC.Controllers
                 if (file == null)
                     return NotFound("File not found");
 
-                var options = new JsonSerializerOptions
+                if (model.KeyImport.PublicKey is not null && 
+                    model.KeyImport.PrivateKey is null &&
+                    model.KeyImport.Modulus is null &&
+                    model.KeyImport.Multiplier is null)
                 {
-                    WriteIndented = false
-                };
-
-                // Case 1: Importing only public key
-                if (!string.IsNullOrEmpty(model.KeyImport.PublicKey) && 
-                    string.IsNullOrEmpty(model.KeyImport.PrivateKey) &&
-                    string.IsNullOrEmpty(model.KeyImport.Modulus) &&
-                    string.IsNullOrEmpty(model.KeyImport.Multiplier))
+                    return await ImportPublicKey(model, file);
+                }
+                else if (model.KeyImport.PrivateKey is not null && 
+                        model.KeyImport.Modulus is not null &&
+                        model.KeyImport.Multiplier is not null)
                 {
-                    var publicKeyList = model.KeyImport.PublicKey.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                        .Select(k => int.Parse(k.Trim()))
-                        .ToList();
-                    
-                    file.PublicKeyJson = JsonSerializer.Serialize(publicKeyList, options);
-                    await _fileService.UpdateFileAsync(file);
-                    
-                    TempData["SuccessMessage"] = "Public key imported successfully.";
+                    return await ImportPrivateKeyWithNAndM(model, file);
+                }
+                else if (model.KeyImport.PublicKey is not null && 
+                        model.KeyImport.PrivateKey is not null &&
+                        model.KeyImport.Modulus is not null &&
+                        model.KeyImport.Multiplier is not null)
+                {
+                    return await ImportAllKeys(model, file);
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "Invalid key import combination. Please provide either public key only or private key with modulus and multiplier.";
                     return RedirectToAction("Index", new { fileId });
                 }
-                
-                // Case 2: Importing private key + n + m
-                if (!string.IsNullOrEmpty(model.KeyImport.PrivateKey) && 
-                    !string.IsNullOrEmpty(model.KeyImport.Modulus) &&
-                    !string.IsNullOrEmpty(model.KeyImport.Multiplier))
-                {
-                    var privateKeyList = model.KeyImport.PrivateKey.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                        .Select(k => int.Parse(k.Trim()))
-                        .ToList();
-                    
-                    var n = int.Parse(model.KeyImport.Modulus.Trim());
-                    var m = int.Parse(model.KeyImport.Multiplier.Trim());
-                    
-                    // Verify private key is a superincreasing sequence
-                    bool isSuperIncreasing = true;
-                    int sum = 0;
-                    foreach (var num in privateKeyList)
-                    {
-                        if (num <= sum)
-                        {
-                            isSuperIncreasing = false;
-                            break;
-                        }
-                        sum += num;
-                    }
-                    
-                    if (!isSuperIncreasing)
-                    {
-                        TempData["ErrorMessage"] = "Invalid private key. The sequence is not superincreasing.";
-                        return RedirectToAction("Index", new { fileId });
-                    }
-                    
-                    // Generate public key from private key
-                    var publicKeyList = privateKeyList.Select(x => (x * m) % n).ToList();
-                    
-                    file.PrivateKeyJson = JsonSerializer.Serialize(privateKeyList, options);
-                    file.PublicKeyJson = JsonSerializer.Serialize(publicKeyList, options);
-                    file.Modulus = n.ToString();
-                    file.Multiplier = m.ToString();
-                    file.KeyBitLength = privateKeyList.Count;
-                    
-                    await _fileService.UpdateFileAsync(file);
-                    
-                    TempData["SuccessMessage"] = "Private key with parameters imported successfully. Public key generated.";
-                    return RedirectToAction("Index", new { fileId });
-                }
-                
-                //Case 3: All keys provided
-                if (!string.IsNullOrEmpty(model.KeyImport.PublicKey) && 
-                    !string.IsNullOrEmpty(model.KeyImport.PrivateKey) &&
-                    !string.IsNullOrEmpty(model.KeyImport.Modulus) &&
-                    !string.IsNullOrEmpty(model.KeyImport.Multiplier))
-                {
-                    var publicKeyList = model.KeyImport.PublicKey.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                        .Select(k => int.Parse(k.Trim()))
-                        .ToList();
-                    var privateKeyList = model.KeyImport.PrivateKey.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                        .Select(k => int.Parse(k.Trim()))
-                        .ToList();
-                    var n = int.Parse(model.KeyImport.Modulus.Trim());
-                    var m = int.Parse(model.KeyImport.Multiplier.Trim());
-                    // Verify private key is a superincreasing sequence
-
-                    bool isSuperIncreasing = true;
-                    int sum = 0;
-                    foreach (var num in privateKeyList)
-                    {
-                        if (num <= sum)
-                        {
-                            isSuperIncreasing = false;
-                            break;
-                        }
-                        sum += num;
-                    }
-                    if (!isSuperIncreasing)
-                    {
-                        TempData["ErrorMessage"] = "Invalid private key. The sequence is not superincreasing.";
-                        return RedirectToAction("Index", new { fileId });
-                    }
-                    // Generate public key from private key
-                    var generatedPublicKeyList = privateKeyList.Select(x => (x * m) % n).ToList();
-                    if (!publicKeyList.SequenceEqual(generatedPublicKeyList))
-                    {
-                        TempData["ErrorMessage"] = "Invalid public key. The provided public key does not match the private key.";
-                        return RedirectToAction("Index", new { fileId });
-                    }
-                    file.PublicKeyJson = JsonSerializer.Serialize(publicKeyList, options);
-                    file.PrivateKeyJson = JsonSerializer.Serialize(privateKeyList, options);
-                    file.Modulus = n.ToString();
-                    file.Multiplier = m.ToString();
-                    file.KeyBitLength = privateKeyList.Count;
-                    await _fileService.UpdateFileAsync(file);
-                    TempData["SuccessMessage"] = "Keys imported successfully.";
-                    return RedirectToAction("Index", new { fileId });
-                }
-                
-                // Case 4: Invalid combination
-                TempData["ErrorMessage"] = "You must provide either:\n1. Only public key\n2. Private key + modulus + multiplier";
-                return RedirectToAction("Index", new { fileId });
             }
             catch (Exception ex)
             {
                 TempData["ErrorMessage"] = $"Error importing keys: {ex.Message}";
                 return RedirectToAction("Index", new { fileId });
             }
+        }
+
+        private async Task<IActionResult> ImportPublicKey(KnapsackCipherViewModel model, Core.Entities.DbFile file)
+        {
+            var publicKeyList = model.KeyImport.PublicKey.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(k => int.Parse(k.Trim()))
+                .ToList();
+            
+            file.PublicKeyJson = JsonSerializer.Serialize(publicKeyList);
+            file.KeyBitLength = publicKeyList.Count;
+            await _fileService.UpdateFileAsync(file);
+            
+            TempData["SuccessMessage"] = "Public key imported successfully.";
+            return RedirectToAction("Index", new { fileId = file.Id });
+        }
+
+        private async Task<IActionResult> ImportPrivateKeyWithNAndM(KnapsackCipherViewModel model, Core.Entities.DbFile file)
+        {
+            var privateKeyList = model.KeyImport.PrivateKey.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(k => int.Parse(k.Trim()))
+                .ToList();
+            
+            var n = int.Parse(model.KeyImport.Modulus.Trim());
+            var m = int.Parse(model.KeyImport.Multiplier.Trim());
+            
+            // Validate private key is superincreasing
+            bool isSuperIncreasing = true;
+            int sum = 0;
+            foreach (var num in privateKeyList)
+            {
+                if (num <= sum)
+                {
+                    isSuperIncreasing = false;
+                    break;
+                }
+                sum += num;
+            }
+            
+            if (!isSuperIncreasing)
+            {
+                TempData["ErrorMessage"] = "Invalid private key. The sequence is not superincreasing.";
+                return RedirectToAction("Index", new { fileId = file.Id });
+            }
+            
+            // Validate modulus is greater than sum
+            if (n <= sum)
+            {
+                TempData["ErrorMessage"] = "Modulus must be greater than the sum of the private key elements.";
+                return RedirectToAction("Index", new { fileId = file.Id });
+            }
+            
+            // Validate multiplier is coprime with modulus
+            if (GCD(m, n) != 1)
+            {
+                TempData["ErrorMessage"] = "Multiplier must be coprime with modulus.";
+                return RedirectToAction("Index", new { fileId = file.Id });
+            }
+            
+            // Generate public key
+            var publicKeyList = privateKeyList.Select(x => (x * m) % n).ToList();
+            
+            file.PrivateKeyJson = JsonSerializer.Serialize(privateKeyList);
+            file.PublicKeyJson = JsonSerializer.Serialize(publicKeyList);
+            file.Modulus = n.ToString();
+            file.Multiplier = m.ToString();
+            file.KeyBitLength = privateKeyList.Count;
+            
+            await _fileService.UpdateFileAsync(file);
+            
+            TempData["SuccessMessage"] = "Private key with parameters imported successfully. Public key generated.";
+            return RedirectToAction("Index", new { fileId = file.Id });
+        }
+
+        private async Task<IActionResult> ImportAllKeys(KnapsackCipherViewModel model, Core.Entities.DbFile file)
+        {
+            var publicKeyList = model.KeyImport.PublicKey.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(k => int.Parse(k.Trim()))
+                .ToList();
+            var privateKeyList = model.KeyImport.PrivateKey.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(k => int.Parse(k.Trim()))
+                .ToList();
+            var n = int.Parse(model.KeyImport.Modulus.Trim());
+            var m = int.Parse(model.KeyImport.Multiplier.Trim());
+            
+            // Validate private key is superincreasing
+            bool isSuperIncreasing = true;
+            int sum = 0;
+            foreach (var num in privateKeyList)
+            {
+                if (num <= sum)
+                {
+                    isSuperIncreasing = false;
+                    break;
+                }
+                sum += num;
+            }
+            
+            if (!isSuperIncreasing)
+            {
+                TempData["ErrorMessage"] = "Invalid private key. The sequence is not superincreasing.";
+                return RedirectToAction("Index", new { fileId = file.Id });
+            }
+            
+            // Validate modulus is greater than sum
+            if (n <= sum)
+            {
+                TempData["ErrorMessage"] = "Modulus must be greater than the sum of the private key elements.";
+                return RedirectToAction("Index", new { fileId = file.Id });
+            }
+            
+            // Validate multiplier is coprime with modulus
+            if (GCD(m, n) != 1)
+            {
+                TempData["ErrorMessage"] = "Multiplier must be coprime with modulus.";
+                return RedirectToAction("Index", new { fileId = file.Id });
+            }
+            
+            // Validate public key matches generated one
+            var generatedPublicKey = privateKeyList.Select(x => (x * m) % n).ToList();
+            if (!publicKeyList.SequenceEqual(generatedPublicKey))
+            {
+                TempData["ErrorMessage"] = "Provided public key does not match the generated one.";
+                return RedirectToAction("Index", new { fileId = file.Id });
+            }
+            
+            file.PublicKeyJson = JsonSerializer.Serialize(publicKeyList);
+            file.PrivateKeyJson = JsonSerializer.Serialize(privateKeyList);
+            file.Modulus = n.ToString();
+            file.Multiplier = m.ToString();
+            file.KeyBitLength = privateKeyList.Count;
+            
+            await _fileService.UpdateFileAsync(file);
+            
+            TempData["SuccessMessage"] = "Keys imported successfully.";
+            return RedirectToAction("Index", new { fileId = file.Id });
+        }
+
+        private int GCD(int a, int b)
+        {
+            while (b != 0)
+            {
+                int temp = b;
+                b = a % b;
+                a = temp;
+            }
+            return a;
         }
     }
 }

@@ -49,21 +49,28 @@
 
                     <h5>Import Existing Keys</h5>
                     <form asp-action="ImportKeys" asp-route-fileId="@Model.FileId" method="post">
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                            </div>
+                        </div>
+
                         <div class="mb-3">
                             <label asp-for="KeyImport.PublicKey" class="form-label">Public Key (comma separated)</label>
                             <textarea asp-for="KeyImport.PublicKey" class="form-control" rows="2" placeholder="e.g., 2, 5, 9, 18, 37, 75"></textarea>
                             <span asp-validation-for="KeyImport.PublicKey" class="text-danger"></span>
                             <div class="form-text">Provide only public key if you want to encrypt only</div>
                         </div>
-                        
+
                         <div class="alert alert-info mb-3">
                             <strong>OR</strong> provide the following for decryption:
                         </div>
-                        
+
                         <div class="mb-3">
                             <label asp-for="KeyImport.PrivateKey" class="form-label">Private Key (Superincreasing Sequence)</label>
                             <textarea asp-for="KeyImport.PrivateKey" class="form-control" rows="2" placeholder="e.g., 1, 2, 4, 8, 16, 32"></textarea>
                             <span asp-validation-for="KeyImport.PrivateKey" class="text-danger"></span>
+                            <div class="form-text">Modulus (n) must be greater than the sum of all elements in the private key.</div>
                         </div>
                         <div class="row">
                             <div class="col">
@@ -71,6 +78,7 @@
                                     <label asp-for="KeyImport.Modulus" class="form-label">Modulus (n)</label>
                                     <input asp-for="KeyImport.Modulus" class="form-control" placeholder="e.g., 127" />
                                     <span asp-validation-for="KeyImport.Modulus" class="text-danger"></span>
+                                    <div class="form-text">Multiplier (m) must be coprime with modulus (n).</div>
                                 </div>
                             </div>
                             <div class="col">
@@ -87,30 +95,38 @@
                 </div>
             </div>
 
-            @if (Model.HasKeys)
+            @if (Model.HasPrivateKey || Model.HasPublicKey)
             {
                 <div class="card mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h4>Current Keys</h4>
-                        <a asp-action="DownloadKeys" asp-route-fileId="@Model.FileId" class="btn btn-sm btn-outline-primary">Download Keys</a>
+                        @if (Model.HasKeys)
+                        {
+                            <a asp-action="DownloadKeys" asp-route-fileId="@Model.FileId" class="btn btn-sm btn-outline-primary">Download Keys</a>
+                        }
                     </div>
                     <div class="card-body">
-                        <h6>Public Key (Bits: @Model.BitLength)</h6>
-                        <p class="text-break">@Model.PublicKey</p>
+                        @if (Model.HasPublicKey)
+                        {
+                            <h6>Public Key (Bits: @Model.BitLength)</h6>
+                            <p class="text-break">@Model.PublicKey</p>
+                        }
+                        @if (Model.HasPrivateKey)
+                        {
+                            <h6>Private Key</h6>
+                            <p class="text-break">@Model.PrivateKey</p>
 
-                        <h6>Private Key</h6>
-                        <p class="text-break">@Model.PrivateKey</p>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h6>Modulus (n)</h6>
-                                <p>@Model.Modulus</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Modulus (n)</h6>
+                                    <p>@Model.Modulus</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Multiplier (m)</h6>
+                                    <p>@Model.Multiplier</p>
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <h6>Multiplier (m)</h6>
-                                <p>@Model.Multiplier</p>
-                            </div>
-                        </div>
+                        }
                     </div>
                 </div>
             }
@@ -123,25 +139,23 @@
                 </div>
                 <div class="card-body">
                     <pre class="border p-3 bg-light" style="height: 300px; overflow-y: auto;">@Model.FileContent</pre>
-                    <div class="d-flex justify-content-between mt-3">
-                        <div class="form-group">
-                            <label asp-for="Language" class="form-label">Language</label>
-                            <select asp-for="Language" class="form-select">
-                                <option value="eng">English</option>
-                                <option value="ukr">Ukrainian</option>
-                            </select>
+                    <form id="cryptoForm" method="post">
+                        <input type="hidden" asp-for="FileId" />
+                        
+                        <div class="d-flex flex-wrap align-items-center justify-content-between mt-3">
+                            <div class="form-group">
+                                <label asp-for="Language" class="form-label">Language</label>
+                                <select asp-for="Language" class="form-select">
+                                    <option value="eng">English</option>
+                                    <option value="ukr">Ukrainian</option>
+                                </select>
+                            </div>
+                            <div class="d-flex">
+                                <button type="submit" formaction="@Url.Action("Encrypt")" class="btn btn-primary me-2" @(Model.HasPublicKey ? "" : "disabled")>Encrypt</button>
+                                <button type="submit" formaction="@Url.Action("Decrypt")" class="btn btn-secondary" @(Model.HasPrivateKey ? "" : "disabled")>Decrypt</button>
+                            </div>
                         </div>
-                        <div>
-                            <form asp-action="Encrypt" asp-route-fileId="@Model.FileId" method="post" class="me-2 d-inline">
-                                <input type="hidden" asp-for="Language" />
-                                <button type="submit" class="btn btn-primary" @(!Model.HasKeys ? "disabled" : "")>Encrypt</button>
-                            </form>
-                            <form asp-action="Decrypt" asp-route-fileId="@Model.FileId" method="post" class="d-inline">
-                                <input type="hidden" asp-for="Language" />
-                                <button type="submit" class="btn btn-secondary" @(!Model.HasKeys ? "disabled" : "")>Decrypt</button>
-                            </form>
-                        </div>
-                    </div>
+                    </form>
                 </div>
             </div>
 
