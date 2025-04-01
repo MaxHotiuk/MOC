@@ -31,12 +31,21 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
 });
 
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<ICaesarCipherService, CaesarCipherService>();
 builder.Services.AddScoped<IFrequencyService, FrequencyService>();
 builder.Services.AddScoped<ITritemiusCipherService, TritemiusCipherService>();
 builder.Services.AddScoped<IXORCipherService, XORCipherService>();
+builder.Services.AddScoped<IKnapsackCipherService, KnapsackCipherService>();
 
 builder.Services.AddControllersWithViews();
 
@@ -67,6 +76,8 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseSession();
 
 app.MapControllerRoute(
     name: "default",

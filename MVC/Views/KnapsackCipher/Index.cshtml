@@ -1,0 +1,196 @@
+@model MVC.Models.KnapsackCipherViewModel
+@{
+    ViewData["Title"] = "Knapsack Cipher";
+}
+
+<div class="container">
+    <h1>@ViewData["Title"]</h1>
+    <p class="lead">Public Key Encryption based on the Knapsack Problem</p>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @Model.SuccessMessage
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @Model.ErrorMessage
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4>Key Management</h4>
+                </div>
+                <div class="card-body">
+                    <h5>Generate New Keys</h5>
+                    <form asp-action="GenerateKeys" asp-route-fileId="@Model.FileId" method="post">
+                        <div class="mb-3">
+                            <label for="bitLength" class="form-label">Bit Length</label>
+                            <select id="bitLength" name="bitLength" class="form-select" disabled>
+                                <option value="8" selected>8 bits</option>
+                            </select>
+                            <div class="form-text">Determines the size of the key sequence</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Generate Keys</button>
+                    </form>
+
+                    <hr />
+
+                    <h5>Import Existing Keys</h5>
+                    <form asp-action="ImportKeys" asp-route-fileId="@Model.FileId" method="post">
+                        <div class="mb-3">
+                            <label asp-for="KeyImport.PublicKey" class="form-label">Public Key (comma separated)</label>
+                            <textarea asp-for="KeyImport.PublicKey" class="form-control" rows="2" placeholder="e.g., 2, 5, 9, 18, 37, 75"></textarea>
+                            <span asp-validation-for="KeyImport.PublicKey" class="text-danger"></span>
+                            <div class="form-text">Provide only public key if you want to encrypt only</div>
+                        </div>
+                        
+                        <div class="alert alert-info mb-3">
+                            <strong>OR</strong> provide the following for decryption:
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="KeyImport.PrivateKey" class="form-label">Private Key (Superincreasing Sequence)</label>
+                            <textarea asp-for="KeyImport.PrivateKey" class="form-control" rows="2" placeholder="e.g., 1, 2, 4, 8, 16, 32"></textarea>
+                            <span asp-validation-for="KeyImport.PrivateKey" class="text-danger"></span>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <div class="mb-3">
+                                    <label asp-for="KeyImport.Modulus" class="form-label">Modulus (n)</label>
+                                    <input asp-for="KeyImport.Modulus" class="form-control" placeholder="e.g., 127" />
+                                    <span asp-validation-for="KeyImport.Modulus" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="mb-3">
+                                    <label asp-for="KeyImport.Multiplier" class="form-label">Multiplier (m)</label>
+                                    <input asp-for="KeyImport.Multiplier" class="form-control" placeholder="e.g., 42" />
+                                    <span asp-validation-for="KeyImport.Multiplier" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-text mb-3">Provide private key + modulus + multiplier if you need to decrypt</div>
+                        <button type="submit" class="btn btn-secondary">Import Keys</button>
+                    </form>
+                </div>
+            </div>
+
+            @if (Model.HasKeys)
+            {
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4>Current Keys</h4>
+                        <a asp-action="DownloadKeys" asp-route-fileId="@Model.FileId" class="btn btn-sm btn-outline-primary">Download Keys</a>
+                    </div>
+                    <div class="card-body">
+                        <h6>Public Key (Bits: @Model.BitLength)</h6>
+                        <p class="text-break">@Model.PublicKey</p>
+
+                        <h6>Private Key</h6>
+                        <p class="text-break">@Model.PrivateKey</p>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Modulus (n)</h6>
+                                <p>@Model.Modulus</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Multiplier (m)</h6>
+                                <p>@Model.Multiplier</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4>File Content</h4>
+                </div>
+                <div class="card-body">
+                    <pre class="border p-3 bg-light" style="height: 300px; overflow-y: auto;">@Model.FileContent</pre>
+                    <div class="d-flex justify-content-between mt-3">
+                        <div class="form-group">
+                            <label asp-for="Language" class="form-label">Language</label>
+                            <select asp-for="Language" class="form-select">
+                                <option value="eng">English</option>
+                                <option value="ukr">Ukrainian</option>
+                            </select>
+                        </div>
+                        <div>
+                            <form asp-action="Encrypt" asp-route-fileId="@Model.FileId" method="post" class="me-2 d-inline">
+                                <input type="hidden" asp-for="Language" />
+                                <button type="submit" class="btn btn-primary" @(!Model.HasKeys ? "disabled" : "")>Encrypt</button>
+                            </form>
+                            <form asp-action="Decrypt" asp-route-fileId="@Model.FileId" method="post" class="d-inline">
+                                <input type="hidden" asp-for="Language" />
+                                <button type="submit" class="btn btn-secondary" @(!Model.HasKeys ? "disabled" : "")>Decrypt</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.EncryptionProcess))
+            {
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4>Encryption Process Details</h4>
+                    </div>
+                    <div class="card-body">
+                        <pre class="border p-3 bg-light" style="max-height: 300px; overflow-y: auto;">@Model.EncryptionProcess</pre>
+                    </div>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(Model.DecryptionProcess))
+            {
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4>Decryption Process Details</h4>
+                    </div>
+                    <div class="card-body">
+                        <pre class="border p-3 bg-light" style="max-height: 300px; overflow-y: auto;">@Model.DecryptionProcess</pre>
+                    </div>
+                </div>
+            }
+
+            <div class="card">
+                <div class="card-header">
+                    <h4>About Knapsack Cipher</h4>
+                </div>
+                <div class="card-body">
+                    <p>The knapsack cipher is one of the earliest public-key cryptography systems, developed by Ralph Merkle and Martin Hellman.</p>
+                    
+                    <h5>How it works:</h5>
+                    <ol>
+                        <li>Start with a superincreasing sequence as the private key (where each element is greater than the sum of all previous elements)</li>
+                        <li>Choose a modulus (n) greater than the sum of all elements in the private key</li>
+                        <li>Choose a multiplier (m) that is coprime to n</li>
+                        <li>Generate the public key by multiplying each element of the private key by m (mod n)</li>
+                        <li>To encrypt, represent each plaintext character as binary and calculate the sum of public key elements where corresponding bits are 1</li>
+                        <li>To decrypt, calculate the modular multiplicative inverse and solve the knapsack problem using the superincreasing property</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

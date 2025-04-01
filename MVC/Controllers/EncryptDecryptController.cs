@@ -191,6 +191,8 @@ namespace MVC.Controllers
                     return RedirectToAction("Index", "TritemiusCipher", new { fileId });
                 case "XOR":
                     return RedirectToAction("Index", "XORCipher", new { fileId });
+                case "Knapsack":
+                    return RedirectToAction("Index", "KnapsackCipher", new { fileId });
                 default:
                     return RedirectToAction("Files");
             }

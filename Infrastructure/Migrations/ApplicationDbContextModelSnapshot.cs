@@ -107,6 +107,21 @@ namespace Infrastructure.Migrations
                     b.Property<bool>("IsByte")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("KeyBitLength")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Modulus")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Multiplier")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PrivateKeyJson")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PublicKeyJson")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("TEXT");

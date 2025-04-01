@@ -10,4 +10,9 @@ public class DbFile
     public string FileName { get; set; } = null!;
     public string FileExtension { get; set; } = null!;
     public bool IsByte { get; set; }
+    public string? PublicKeyJson { get; set; }
+    public string? PrivateKeyJson { get; set; }
+    public string? Modulus { get; set; }
+    public string? Multiplier { get; set; }
+    public int? KeyBitLength { get; set; }
 }

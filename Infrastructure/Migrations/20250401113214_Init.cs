@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class Init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -168,7 +168,12 @@ namespace Infrastructure.Migrations
                     FileContentByte = table.Column<byte[]>(type: "BLOB", nullable: true),
                     FileName = table.Column<string>(type: "TEXT", nullable: false),
                     FileExtension = table.Column<string>(type: "TEXT", nullable: false),
-                    IsByte = table.Column<bool>(type: "INTEGER", nullable: false)
+                    IsByte = table.Column<bool>(type: "INTEGER", nullable: false),
+                    PublicKeyJson = table.Column<string>(type: "TEXT", nullable: true),
+                    PrivateKeyJson = table.Column<string>(type: "TEXT", nullable: true),
+                    Modulus = table.Column<string>(type: "TEXT", nullable: true),
+                    Multiplier = table.Column<string>(type: "TEXT", nullable: true),
+                    KeyBitLength = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
