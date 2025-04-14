@@ -193,6 +193,8 @@ namespace MVC.Controllers
                     return RedirectToAction("Index", "XORCipher", new { fileId });
                 case "Knapsack":
                     return RedirectToAction("Index", "KnapsackCipher", new { fileId });
+                case "RSA":
+                    return RedirectToAction("Index", "RSACipher", new { fileId });
                 default:
                     return RedirectToAction("Files");
             }

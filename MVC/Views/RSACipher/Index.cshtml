@@ -1,0 +1,216 @@
+@{
+    ViewData["Title"] = "RSA Cryptography";
+    var e = TempData["e"] as string;
+    var d = TempData["d"] as string;
+    var n = TempData["n"] as string;
+    var p = TempData["p"] as string;
+    var q = TempData["q"] as string;
+}
+
+<div class="container">
+    <h1 class="mt-4">@ViewData["Title"]</h1>
+    <p class="lead">Public Key Encryption using RSA Algorithm</p>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            🔐 How RSA Cryptography Works
+        </div>
+        <div class="card-body">
+            <p>
+                RSA (Rivest–Shamir–Adleman) is a public-key cryptosystem that enables secure data transmission.
+            </p>
+            <ul>
+                <li><strong>Key Generation:</strong> Two large prime numbers (<code>p</code> and <code>q</code>) are selected and multiplied to form <code>n</code>.</li>
+                <li><strong>Public Key:</strong> Comprised of an exponent <code>e</code> and the modulus <code>n</code>. Used for encryption.</li>
+                <li><strong>Private Key:</strong> Comprised of an exponent <code>d</code> and the same modulus <code>n</code>. Used for decryption.</li>
+                <li><strong>Encryption:</strong> <code>cipher = message<sup>e</sup> mod n</code></li>
+                <li><strong>Decryption:</strong> <code>message = cipher<sup>d</sup> mod n</code></li>
+            </ul>
+            <p>
+                RSA is widely used in securing sensitive data, especially when being sent over an insecure network like the internet.
+            </p>
+        </div>
+    </div>
+
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">Generate Keys</div>
+                <div class="card-body">
+                    <form asp-action="GenerateKeys" method="post">
+                        <input type="hidden" name="fileId" value="@ViewBag.FileId" />
+                        <div class="mb-3">
+                            <label for="bitLength" class="form-label">Key Size</label>
+                            <select id="bitLength" name="bitLength" class="form-select">
+                                <option value="512">512 bits</option>
+                                <option value="1024" selected>1024 bits</option>
+                                <option value="2048">2048 bits</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Generate Keys</button>
+                    </form>
+                </div>
+            </div>
+
+            @if (e != null && d != null && n != null)
+            {
+                <div class="card mb-4">
+                    <div class="card-header">Generated Keys</div>
+                    <div class="card-body">
+                        <div class="alert alert-warning">
+                            Keep your private key safe. Anyone who obtains it can decrypt your data.
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Public Key (e, n)</label>
+                            <div class="input-group mb-2">
+                                <span class="input-group-text">e</span>
+                                <input class="form-control" value="@e" readonly>
+                                <button class="btn btn-outline-secondary" type="button" onclick="copy(this)">
+                                    📋
+                                </button>
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text">n</span>
+                                <input class="form-control" value="@n" readonly>
+                                <button class="btn btn-outline-secondary" type="button" onclick="copy(this)">
+                                    📋
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Private Key (d, n)</label>
+                            <div class="input-group mb-2">
+                                <span class="input-group-text">d</span>
+                                <input class="form-control" value="@d" readonly>
+                                <button class="btn btn-outline-secondary" type="button" onclick="copy(this)">
+                                    📋
+                                </button>
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text">n</span>
+                                <input class="form-control" value="@n" readonly>
+                                <button class="btn btn-outline-secondary" type="button" onclick="copy(this)">
+                                    📋
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Prime Factors</label>
+                            <div class="input-group mb-2">
+                                <span class="input-group-text">p</span>
+                                <input class="form-control" value="@p" readonly>
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text">q</span>
+                                <input class="form-control" value="@q" readonly>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-outline-success w-100" onclick="downloadKeys()">Download as .txt</button>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="col-md-6">
+            <!-- Encrypt -->
+            <div class="card mb-4">
+                <div class="card-header">Encrypt Text</div>
+                <div class="card-body">
+                    <form asp-action="Encrypt" method="post">
+                        <input type="hidden" name="fileId" value="@ViewBag.FileId" />
+                        <div class="mb-3">
+                            <label for="publicKeyE" class="form-label">Public Key e</label>
+                            <input type="text" id="publicKeyE" name="publicKeyE" class="form-control" value="@e" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="publicKeyN" class="form-label">Public Key n</label>
+                            <input type="text" id="publicKeyN" name="publicKeyN" class="form-control" value="@n" required>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">Encrypt</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Decrypt -->
+            <div class="card mb-4">
+                <div class="card-header">Decrypt Text</div>
+                <div class="card-body">
+                    <form asp-action="Decrypt" method="post">
+                        <input type="hidden" name="fileId" value="@ViewBag.FileId" />
+                        <div class="mb-3">
+                            <label for="privateKeyD" class="form-label">Private Key d</label>
+                            <input type="text" id="privateKeyD" name="privateKeyD" class="form-control" value="@d" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="privateKeyN" class="form-label">Private Key n</label>
+                            <input type="text" id="privateKeyN" name="privateKeyN" class="form-control" value="@n" required>
+                        </div>
+                        <button type="submit" class="btn btn-warning w-100">Decrypt</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Content -->
+    <div class="card mb-4">
+        <div class="card-header">File Content</div>
+        <div class="card-body">
+            <textarea class="form-control" rows="8" readonly>@ViewBag.FileContent</textarea>
+        </div>
+    </div>
+
+    <a asp-controller="EncryptDecrypt" asp-action="Files" class="btn btn-outline-secondary">
+        ⬅ Back to Files
+    </a>
+</div>
+
+@section Scripts {
+    <script>
+        function copy(btn) {
+            const input = btn.parentElement.querySelector('input');
+            input.select();
+            document.execCommand('copy');
+            btn.textContent = '✅';
+            setTimeout(() => btn.textContent = '📋', 1500);
+        }
+
+        function downloadKeys() {
+            const e = '@e';
+            const d = '@d';
+            const n = '@n';
+            const p = '@p';
+            const q = '@q';
+
+            const content =
+                `RSA Key Details\n\n` +
+                `Public Key:\n  e = ${e}\n  n = ${n}\n\n` +
+                `Private Key:\n  d = ${d}\n  n = ${n}\n\n` +
+                `Prime Factors:\n  p = ${p}\n  q = ${q}`;
+
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'rsa_keys.txt';
+            a.click();
+
+            URL.revokeObjectURL(url);
+        }
+    </script>
+}
