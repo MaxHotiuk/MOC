@@ -197,19 +197,19 @@ namespace Infrastructure.Services
         // Шифрування повідомлення
         public Task<string> EncryptAsync(string plainText, BigInteger e, BigInteger n)
         {
-            byte[] bytes = Encoding.UTF8.GetBytes(plainText);
+            // Отримуємо числові значення символів Unicode
             var encrypted = new StringBuilder();
             
-            foreach (byte b in bytes)
+            foreach (char c in plainText)
             {
-                // Преобразуємо байт в BigInteger
-                BigInteger m = new BigInteger(b);
+                // Перетворюємо символ на його числове значення Unicode
+                BigInteger m = new BigInteger(c);
                 
                 // Шифруємо використовуючи c = m^e mod n
-                BigInteger c = ModPow(m, e, n);
+                BigInteger c_encrypted = ModPow(m, e, n);
                 
                 // Додаємо до зашифрованого рядка та відокремлюємо символом ","
-                encrypted.Append(c.ToString());
+                encrypted.Append(c_encrypted.ToString());
                 encrypted.Append(",");
             }
             
@@ -219,7 +219,7 @@ namespace Infrastructure.Services
             
             return Task.FromResult(encrypted.ToString());
         }
-        
+
         // Розшифрування повідомлення
         public Task<string> DecryptAsync(string cipherText, BigInteger d, BigInteger n)
         {
@@ -238,9 +238,9 @@ namespace Infrastructure.Services
                 // Розшифровуємо використовуючи m = c^d mod n
                 BigInteger m = ModPow(c, d, n);
                 
-                // Конвертуємо назад в символ
-                byte b = (byte)m;
-                decrypted.Append((char)b);
+                // Конвертуємо назад у символ Unicode
+                char character = (char)(int)m;
+                decrypted.Append(character);
             }
             
             return Task.FromResult(decrypted.ToString());

@@ -195,6 +195,8 @@ namespace MVC.Controllers
                     return RedirectToAction("Index", "KnapsackCipher", new { fileId });
                 case "RSA":
                     return RedirectToAction("Index", "RSACipher", new { fileId });
+                case "DiffieHellman":
+                    return RedirectToAction("Index", "DiffieHellman", new { fileId });
                 default:
                     return RedirectToAction("Files");
             }

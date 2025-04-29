@@ -1,0 +1,356 @@
+@{
+    ViewData["Title"] = "Diffie-Hellman Key Exchange";
+    var p = TempData["p"] as string;
+    var g = TempData["g"] as string;
+    var privateKey = TempData["privateKey"] as string;
+    var publicKey = TempData["publicKey"] as string;
+    var sharedSecret = TempData["sharedSecret"] as string;
+    var keyMaterial = TempData["keyMaterial"] as string;
+    var encryptedText = TempData["encryptedText"] as string;
+    var decryptedText = TempData["decryptedText"] as string;
+}
+
+<div class="container">
+    <h1 class="mt-4">@ViewData["Title"]</h1>
+    <p class="lead">Протокол обміну ключами Діффі-Гелмана</p>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            🔑 Як працює протокол Діффі-Гелмана
+        </div>
+        <div class="card-body">
+            <p>
+                Протокол Діффі-Гелмана дозволяє двом сторонам спільно отримати секретний ключ, 
+                використовуючи незахищений канал зв'язку, без попереднього обміну секретною інформацією.
+            </p>
+            <ol>
+                <li><strong>Параметри:</strong> Обидві сторони узгоджують велике просте число <code>p</code> і генератор <code>g</code>.</li>
+                <li><strong>Приватні ключі:</strong> Кожна сторона генерує свій приватний ключ: <code>a</code> і <code>b</code>.</li>
+                <li><strong>Публічні ключі:</strong> Обчислюються і обмінюються публічними ключами:
+                    <ul>
+                        <li>Аліса: <code>A = g<sup>a</sup> mod p</code></li>
+                        <li>Боб: <code>B = g<sup>b</sup> mod p</code></li>
+                    </ul>
+                </li>
+                <li><strong>Спільний секрет:</strong> Обидві сторони обчислюють один і той самий спільний секрет:
+                    <ul>
+                        <li>Аліса: <code>s = B<sup>a</sup> mod p</code></li>
+                        <li>Боб: <code>s = A<sup>b</sup> mod p</code></li>
+                    </ul>
+                </li>
+                <li><strong>Результат:</strong> Обидві сторони мають однаковий спільний секрет <code>s = g<sup>ab</sup> mod p</code>, 
+                    який можна використовувати як ключ для симетричного шифрування.</li>
+            </ol>
+            <p>
+                Безпека протоколу базується на складності обчислення дискретного логарифма.
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">Генерація параметрів</div>
+                <div class="card-body">
+                    <form asp-action="GenerateParameters" method="post">
+                        <input type="hidden" name="fileId" value="@ViewBag.FileId" />
+                        <div class="mb-3">
+                            <label for="bitLength" class="form-label">Розмір модуля</label>
+                            <select id="bitLength" name="bitLength" class="form-select">
+                                <option value="16">16 біт</option>
+                                <option value="32" selected>32 біт</option>
+                                <option value="64">64 біт</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Генерувати параметри</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Додайте цей блок після картки "Генерація параметрів" -->
+            <div class="card mb-4">
+                <div class="card-header">Генерація ключів за існуючими параметрами</div>
+                <div class="card-body">
+                    <form asp-action="GenerateWithExistingParameters" method="post">
+                        <input type="hidden" name="fileId" value="@ViewBag.FileId" />
+                        <div class="mb-3">
+                            <label for="existingP" class="form-label">Модуль (p)</label>
+                            <input type="text" id="existingP" name="existingP" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="existingG" class="form-label">Генератор (g)</label>
+                            <input type="text" id="existingG" name="existingG" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Згенерувати ключі</button>
+                    </form>
+                </div>
+            </div>
+
+            @if (p != null && g != null && privateKey != null && publicKey != null)
+            {
+                <div class="card mb-4">
+                    <div class="card-header">Згенеровані параметри</div>
+                    <div class="card-body">
+                        <div class="alert alert-warning">
+                            Зберігайте свій приватний ключ в безпеці. Не розголошуйте його іншим сторонам.
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Спільні параметри</label>
+                            <div class="input-group mb-2">
+                                <span class="input-group-text">p</span>
+                                <input class="form-control" value="@p" readonly>
+                                <button class="btn btn-outline-secondary" type="button" onclick="copy(this)">
+                                    📋
+                                </button>
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text">g</span>
+                                <input class="form-control" value="@g" readonly>
+                                <button class="btn btn-outline-secondary" type="button" onclick="copy(this)">
+                                    📋
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Ваш публічний ключ (можна поділитись)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">A</span>
+                                <input class="form-control" value="@publicKey" readonly>
+                                <button class="btn btn-outline-secondary" type="button" onclick="copy(this)">
+                                    📋
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Ваш приватний ключ (тримайте в секреті)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">a</span>
+                                <input class="form-control" value="@privateKey" readonly>
+                                <button class="btn btn-outline-secondary" type="button" onclick="copy(this)">
+                                    📋
+                                </button>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-outline-success w-100" onclick="downloadParameters()">Завантажити параметри як .txt</button>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="col-md-6">
+            <!-- Обчислення спільного секретного ключа -->
+            <div class="card mb-4">
+                <div class="card-header">Обчислення спільного секрету</div>
+                <div class="card-body">
+                    <form asp-action="ComputeSharedSecret" method="post">
+                        <input type="hidden" name="fileId" value="@ViewBag.FileId" />
+                        <div class="mb-3">
+                            <label for="otherPublicKey" class="form-label">Публічний ключ іншої сторони (B)</label>
+                            <input type="text" id="otherPublicKey" name="otherPublicKey" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="privateKey" class="form-label">Ваш приватний ключ (a)</label>
+                            <input type="text" id="privateKey" name="privateKey" class="form-control" value="@privateKey" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="modulus" class="form-label">Модуль (p)</label>
+                            <input type="text" id="modulus" name="modulus" class="form-control" value="@p" required>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">Обчислити спільний секрет</button>
+                    </form>
+                </div>
+            </div>
+
+            @if (sharedSecret != null && keyMaterial != null)
+            {
+                <div class="card mb-4">
+                    <div class="card-header">Спільний секретний ключ</div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            Спільний секрет успішно обчислено! Тепер його можна використовувати для шифрування.
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Ключовий матеріал (hex)</label>
+                            <div class="input-group">
+                                <input class="form-control" value="@keyMaterial" readonly>
+                                <button class="btn btn-outline-secondary" type="button" onclick="copy(this)">
+                                    📋
+                                </button>
+                            </div>
+                            <small class="text-muted">Цей ключ можна використовувати для симетричного шифрування.</small>
+                        </div>
+
+                        <button class="btn btn-outline-success w-100" onclick="downloadSharedSecret()">Завантажити спільний секрет як .txt</button>
+                    </div>
+                </div>
+            }
+
+            <!-- Додайте цей блок після карток з обчисленням спільного секрету -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            🔒 Шифрування тексту
+                        </div>
+                        <div class="card-body">
+                            <form asp-action="EncryptText" method="post">
+                                <input type="hidden" name="fileId" value="@ViewBag.FileId" />
+                                <div class="mb-3">
+                                    <label for="keyMaterial" class="form-label">Ключовий матеріал (hex)</label>
+                                    <input type="text" id="keyMaterial" name="keyMaterial" class="form-control" 
+                                        value="@keyMaterial" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="plainText" class="form-label">Текст для шифрування</label>
+                                    <textarea id="plainText" name="plainText" class="form-control" rows="4" 
+                                            placeholder="Введіть текст для шифрування..." required></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-success w-100">Зашифрувати</button>
+                            </form>
+                            
+                            @if (!string.IsNullOrEmpty(encryptedText))
+                            {
+                                <div class="mt-3">
+                                    <label class="form-label">Зашифрований текст (Base64)</label>
+                                    <div class="input-group">
+                                        <textarea class="form-control" rows="3" readonly>@encryptedText</textarea>
+                                        <button class="btn btn-outline-secondary" type="button" onclick="copyTextarea(this)">
+                                            📋
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            🔓 Розшифрування тексту
+                        </div>
+                        <div class="card-body">
+                            <form asp-action="DecryptText" method="post">
+                                <input type="hidden" name="fileId" value="@ViewBag.FileId" />
+                                <div class="mb-3">
+                                    <label for="decryptKeyMaterial" class="form-label">Ключовий матеріал (hex)</label>
+                                    <input type="text" id="decryptKeyMaterial" name="keyMaterial" class="form-control" 
+                                        value="@keyMaterial" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="cipherText" class="form-label">Зашифрований текст (Base64)</label>
+                                    <textarea id="cipherText" name="cipherText" class="form-control" rows="4" 
+                                            placeholder="Введіть зашифрований текст для розшифрування..." required></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Розшифрувати</button>
+                            </form>
+                            
+                            @if (!string.IsNullOrEmpty(decryptedText))
+                            {
+                                <div class="mt-3">
+                                    <label class="form-label">Розшифрований текст</label>
+                                    <div class="input-group">
+                                        <textarea class="form-control" rows="3" readonly>@decryptedText</textarea>
+                                        <button class="btn btn-outline-secondary" type="button" onclick="copyTextarea(this)">
+                                            📋
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Content -->
+    <div class="card mb-4">
+        <div class="card-header">Вміст файлу</div>
+        <div class="card-body">
+            <textarea class="form-control" rows="8" readonly>@ViewBag.FileContent</textarea>
+        </div>
+    </div>
+
+    <a asp-controller="EncryptDecrypt" asp-action="Files" class="btn btn-outline-secondary">
+        ⬅ Назад до файлів
+    </a>
+</div>
+
+@section Scripts {
+    <script>
+        function copy(btn) {
+            const input = btn.parentElement.querySelector('input');
+            input.select();
+            document.execCommand('copy');
+            btn.textContent = '✅';
+            setTimeout(() => btn.textContent = '📋', 1500);
+        }
+
+        function copyTextarea(btn) {
+            const textarea = btn.parentElement.querySelector('textarea');
+            textarea.select();
+            document.execCommand('copy');
+            btn.textContent = '✅';
+            setTimeout(() => btn.textContent = '📋', 1500);
+        }
+
+        function downloadParameters() {
+            const p = '@p';
+            const g = '@g';
+            const publicKey = '@publicKey';
+            const privateKey = '@privateKey';
+
+            const content =
+                `Diffie-Hellman Parameters\n\n` +
+                `Prime Modulus (p):\n${p}\n\n` +
+                `Generator (g):\n${g}\n\n` +
+                `Public Key (A):\n${publicKey}\n\n` +
+                `Private Key (a) - KEEP SECURE:\n${privateKey}`;
+
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'diffie_hellman_parameters.txt';
+            a.click();
+
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadSharedSecret() {
+            const sharedSecret = '@sharedSecret';
+            const keyMaterial = '@keyMaterial';
+
+            const content =
+                `Diffie-Hellman Shared Secret\n\n` +
+                `Raw Shared Secret:\n${sharedSecret}\n\n` +
+                `Derived Key Material (hex):\n${keyMaterial}`;
+
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'diffie_hellman_shared_secret.txt';
+            a.click();
+
+            URL.revokeObjectURL(url);
+        }
+    </script>
+}

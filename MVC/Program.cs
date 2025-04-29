@@ -47,6 +47,7 @@ builder.Services.AddScoped<ITritemiusCipherService, TritemiusCipherService>();
 builder.Services.AddScoped<IXORCipherService, XORCipherService>();
 builder.Services.AddScoped<IKnapsackCipherService, KnapsackCipherService>();
 builder.Services.AddScoped<IRSAService, RSAService>();
+builder.Services.AddScoped<IDiffieHellmanService, DiffieHellmanService>();
 
 builder.Services.AddControllersWithViews();
 
